@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,42 +6,61 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Turman Work Order Assistant</title>
   <style>
-    body { font-family: "Times New Roman", serif; max-width: 700px; margin: auto; padding: 2em; }
-    h1 { text-align: center; }
+    body {
+      font-family: "Times New Roman", serif;
+      max-width: 700px;
+      margin: auto;
+      padding: 2em;
+      background-color: #fff;
+    }
+    h1, h2 {
+      text-align: center;
+    }
     select, button, input {
       width: 100%;
       padding: 10px;
       margin-top: 10px;
       font-family: "Times New Roman", serif;
     }
-    .hidden { display: none; }
+    .hidden {
+      display: none;
+    }
     .summary-box {
-      white-space: pre-wrap;
       background: #f9f9f9;
-      padding: 10px;
+      padding: 15px;
       margin-top: 20px;
       border: 1px solid #ccc;
+      white-space: pre-wrap;
     }
     img.logo {
-      max-width: 200px;
       display: block;
-      margin: 0 auto 20px auto;
+      margin: 0 auto 10px auto;
+      max-height: 80px;
     }
   </style>
 </head>
 <body>
-  <img class="logo" src="https://www.turmanco.com/images/TRCO%20Logo.jpg" alt="Turman Realty Logo"/>
+  <img src="https://www.turmanco.com/images/logo.png" alt="Turman Realty Logo" class="logo" />
   <h1>Turman Work Order Assistant</h1>
+
   <label for="issueType">Select Issue Type:</label>
   <select id="issueType">
     <option value="">-- Choose an issue --</option>
+    <option value="Refrigerator">Refrigerator</option>
     <option value="Oven / Stove">Oven / Stove</option>
+    <option value="AC / Heat">AC / Heat</option>
+    <option value="Plumbing / Leak">Plumbing / Leak</option>
+    <option value="Electrical / Power">Electrical / Power</option>
+    <option value="Roof / Ceiling">Roof / Ceiling</option>
+    <option value="Other">Other</option>
   </select>
+
   <div id="questionBox" class="hidden">
     <p id="questionText"></p>
-    <input type="text" id="answerInput" spellcheck="true" />
+    <input type="text" id="answerInput" onkeydown="if(event.key==='Enter'){submitAnswer();}" />
     <button onclick="submitAnswer()">Submit Answer</button>
   </div>
+
   <div id="summarySection" class="hidden">
     <h2>Summary</h2>
     <div id="summaryText" class="summary-box"></div>
@@ -50,80 +70,123 @@
 
   <script>
     const flows = {
+      "Refrigerator": [
+        { q: "Is the fridge running or making any noise?", key: "running" },
+        { q: "Does the interior light turn on when the door opens?", key: "light" },
+        { q: "Have you tested the outlet with another device?", key: "outlet" },
+        { q: "Is the breaker in the 'on' position?", key: "breaker" },
+        { q: "Describe the fridge issue in your own words.", key: "note" }
+      ],
       "Oven / Stove": [
-        { q: "Gas or electric?", key: "type" },
+        { q: "Is it gas or electric?", key: "type" },
         { q: "Do any burners or the oven turn on?", key: "power" },
-        { q: "Is the breaker on?", key: "breaker" },
-        { q: "If gas, is the pilot light lit?", key: "pilot", condition: (a) => a.type?.toLowerCase() === "gas" },
-        { q: "Describe the oven/stove issue:", key: "note" }
+        { q: "Is the pilot light lit? (Gas only)", key: "pilot", showIf: (a) => a.type?.toLowerCase() === "gas" },
+        { q: "Is the breaker in the 'on' position?", key: "breaker" },
+        { q: "Describe the oven/stove issue in your own words.", key: "note" }
+      ],
+      "AC / Heat": [
+        { q: "Is it currently over 85°F or under 60°F outside?", key: "priority" },
+        { q: "Is any air blowing through the vents?", key: "air" },
+        { q: "Is the thermostat display on?", key: "thermostat" },
+        { q: "Have you reset the breakers?", key: "breaker" },
+        { q: "Do you hear any noise from the outdoor unit?", key: "outdoor_unit" },
+        { q: "Please describe the HVAC issue in your own words.", key: "note" }
+      ],
+      "Plumbing / Leak": [
+        { q: "Where is the water leak coming from?", key: "source" },
+        { q: "Have you shut off the water valve?", key: "shutoff" },
+        { q: "Is the leak active or a slow drip?", key: "rate" },
+        { q: "Has this happened before?", key: "recurring" },
+        { q: "Describe the plumbing issue.", key: "note" }
+      ],
+      "Electrical / Power": [
+        { q: "Is power out in the entire unit or just one area?", key: "area" },
+        { q: "Have you checked all breakers and GFCI outlets?", key: "breaker" },
+        { q: "Did you test the outlet/fixture with another working device?", key: "test" },
+        { q: "Do you see any burn marks or smell anything unusual?", key: "burn" },
+        { q: "Describe the electrical issue in your own words.", key: "note" }
+      ],
+      "Roof / Ceiling": [
+        { q: "Which room is showing signs of a leak or damage?", key: "room" },
+        { q: "Is water actively leaking or just stained?", key: "leak" },
+        { q: "Is there visible damage to the roof (shingles, limbs, etc.)?", key: "damage" },
+        { q: "Is anything in the attic possibly causing it?", key: "attic" },
+        { q: "Describe the roof or ceiling issue.", key: "note" }
+      ],
+      "Other": [
+        { q: "Briefly describe the issue.", key: "note" },
+        { q: "Anything else that might help the vendor?", key: "details" }
       ]
     };
 
-    function clean(text) {
-      return text.charAt(0).toUpperCase() + text.trim().replace(/\s+/g, " ") + (text.endsWith(".") ? "" : ".");
-    }
-
-    const summaries = {
-      "Oven / Stove": (a) => {
-        const type = a.type?.toLowerCase() || "unknown";
-        let pilotLine = "";
-        if (type === "gas" && a.pilot) {
-          pilotLine = " The pilot light is " + (a.pilot.toLowerCase() === "yes" ? "lit" : "not lit") + ".";
-        }
-        return clean("There is an issue with the " + type + " oven/stove. " + a.power + " components are working. The breaker is " + a.breaker + "." + pilotLine + " " + a.note);
-      }
-    };
-
-    let currentFlow = [], answers = {}, currentIndex = 0, selectedType = "";
+    let flow = [], answers = {}, index = 0, selectedType = "";
 
     document.getElementById("issueType").addEventListener("change", function () {
       selectedType = this.value;
-      if (!selectedType) return;
-      currentFlow = flows[selectedType];
+      flow = flows[selectedType];
       answers = {};
-      currentIndex = 0;
+      index = 0;
       document.getElementById("questionBox").classList.remove("hidden");
-      askQuestion();
+      askNext();
     });
 
-    document.getElementById("answerInput").addEventListener("keydown", function(e) {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        submitAnswer();
+    function askNext() {
+      while (index < flow.length && flow[index].showIf && !flow[index].showIf(answers)) {
+        index++;
       }
-    });
-
-    function askQuestion() {
-      while (currentIndex < currentFlow.length && currentFlow[currentIndex].condition && !currentFlow[currentIndex].condition(answers)) {
-        currentIndex++;
-      }
-      if (currentIndex < currentFlow.length) {
-        document.getElementById("questionText").innerText = currentFlow[currentIndex].q;
-        document.getElementById("answerInput").value = "";
-      } else {
-        showSummary();
-      }
+      if (index >= flow.length) return showSummary();
+      document.getElementById("questionText").innerText = flow[index].q;
+      document.getElementById("answerInput").value = "";
     }
 
     function submitAnswer() {
-      const key = currentFlow[currentIndex].key;
-      const val = document.getElementById("answerInput").value.trim();
-      if (!val) return;
-      answers[key] = val;
-      currentIndex++;
-      askQuestion();
+      const input = document.getElementById("answerInput").value.trim();
+      if (!input) return;
+      const key = flow[index].key;
+      answers[key] = enhanceInput(input);
+      index++;
+      askNext();
+    }
+
+    function enhanceInput(text) {
+      text = text[0].toUpperCase() + text.slice(1);
+      if (!text.endsWith(".")) text += ".";
+      return text;
     }
 
     function showSummary() {
       document.getElementById("questionBox").classList.add("hidden");
       document.getElementById("summarySection").classList.remove("hidden");
-      const summary = summaries[selectedType](answers);
+      const summary = generateParagraph(selectedType, answers);
       document.getElementById("summaryText").innerText = summary;
+    }
+
+    function generateParagraph(type, a) {
+      switch (type) {
+        case "Refrigerator":
+          return `There is a refrigerator issue. It is ${a.running?.toLowerCase()}. The light ${a.light?.toLowerCase() === "yes" ? "comes on" : "does not come on"}. The outlet was ${a.outlet}. The breaker is ${a.breaker}. ${a.note}`;
+        case "Oven / Stove":
+          return `There is an issue with the ${a.type?.toLowerCase()} oven/stove. ${a.power}. ${
+            a.type?.toLowerCase() === "gas" ? `Pilot light status: ${a.pilot}. ` : ""
+          }Breaker is ${a.breaker}. ${a.note}`;
+        case "AC / Heat":
+          return `HVAC concern reported. Outside temperature is extreme: ${a.priority}. Airflow status: ${a.air}. Thermostat: ${a.thermostat}. Breakers: ${a.breaker}. Outdoor unit: ${a.outdoor_unit}. ${a.note}`;
+        case "Plumbing / Leak":
+          return `Plumbing issue in ${a.source}. Shutoff valve: ${a.shutoff}. Leak type: ${a.rate}. Previous occurrence: ${a.recurring}. ${a.note}`;
+        case "Electrical / Power":
+          return `Electrical problem affecting ${a.area}. Breakers/GFCIs: ${a.breaker}. Testing results: ${a.test}. Observations: ${a.burn}. ${a.note}`;
+        case "Roof / Ceiling":
+          return `Leak/damage reported in ${a.room}. Water activity: ${a.leak}. Roof damage: ${a.damage}. Attic findings: ${a.attic}. ${a.note}`;
+        case "Other":
+          return `General issue: ${a.note} ${a.details}`;
+        default:
+          return "No summary available.";
+      }
     }
 
     function copySummary() {
       const text = document.getElementById("summaryText").innerText;
-      navigator.clipboard.writeText(text).then(() => alert("Summary copied!"));
+      navigator.clipboard.writeText(text).then(() => alert("Summary copied to clipboard!"));
     }
   </script>
 </body>
