@@ -50,8 +50,8 @@
       "Oven / Stove": [
         { q: "Gas or electric?", key: "type" },
         { q: "Do any burners or the oven turn on?", key: "power" },
-        { q: "If gas, is the pilot light lit?", key: "pilot" },
         { q: "Is the breaker on?", key: "breaker" },
+        { q: "If gas, is the pilot light lit?", key: "pilot", condition: (a) => a.type?.toLowerCase() === "gas" },
         { q: "Describe the oven/stove issue:", key: "note" }
       ],
       "AC / Heat": [
@@ -89,28 +89,31 @@
       ]
     };
 
-const summaries = {
-  "Refrigerator": (a) => 
-    `The refrigerator is experiencing an issue. It is ${a.running.toLowerCase() === "yes" ? "running" : "not running"} and the interior light ${a.light.toLowerCase() === "yes" ? "turns on" : "does not turn on"} when the door opens. The outlet was ${a.outlet.toLowerCase() === "yes" ? "tested and is working" : "not tested or not working"}, and the breaker is ${a.breaker}. ${a.note}`,
+    const summaries = {
+      "Refrigerator": (a) =>
+        `The refrigerator is ${a.running.toLowerCase() === "yes" ? "running" : "not running"}, and the interior light ${a.light.toLowerCase() === "yes" ? "comes on" : "does not come on"} when the door opens. The outlet was ${a.outlet.toLowerCase() === "yes" ? "tested and works" : "not tested or not working"}. The breaker is ${a.breaker}. ${a.note}`,
 
-  "Oven / Stove": (a) =>
-    `There is an issue with the ${a.type.toLowerCase()} oven/stove. ${a.power.toLowerCase() === "yes" ? "Some components are working" : "None of the burners or oven are working"}. The pilot light is ${a.pilot.toLowerCase() === "yes" ? "lit" : "not lit"}, and the breaker is ${a.breaker}. ${a.note}`,
+      "Oven / Stove": (a) => {
+        const isGas = a.type?.toLowerCase() === "gas";
+        const pilotLine = isGas && a.pilot ? `The pilot light is ${a.pilot.toLowerCase() === "yes" ? "lit" : "not lit"}. ` : "";
+        return `This is a ${a.type.toLowerCase()} oven/stove. ${a.power} burners or the oven are working. The breaker is ${a.breaker}. ${pilotLine}${a.note}`;
+      },
 
-  "AC / Heat": (a) =>
-    `The HVAC system is having trouble. The outside temperature is extreme (${a.priority}). Air is ${a.air.toLowerCase() === "yes" ? "blowing" : "not blowing"} through the vents. The thermostat is ${a.thermostat.toLowerCase() === "yes" ? "on" : "off"}, and the breakers have been ${a.breaker}. The outdoor unit is ${a.outdoor_unit}. ${a.note}`,
+      "AC / Heat": (a) =>
+        `The HVAC system is affected. It is ${a.priority} outside. Air is ${a.air.toLowerCase() === "yes" ? "blowing through the vents" : "not blowing"}. The thermostat is ${a.thermostat.toLowerCase() === "yes" ? "on" : "off"}, and the breakers have been ${a.breaker}. The outdoor unit is ${a.outdoor_unit}. ${a.note}`,
 
-  "Plumbing / Leak": (a) =>
-    `There is a leak coming from ${a.source}. The water valve has ${a.shutoff.toLowerCase() === "yes" ? "been shut off" : "not been shut off"}. The leak is a ${a.rate}, and it ${a.recurring.toLowerCase() === "yes" ? "has happened before" : "is a new issue"}. ${a.note}`,
+      "Plumbing / Leak": (a) =>
+        `There is a leak from ${a.source}. The water valve has ${a.shutoff.toLowerCase() === "yes" ? "been shut off" : "not been shut off"}. It is a ${a.rate} leak. This issue has ${a.recurring.toLowerCase() === "yes" ? "occurred before" : "not occurred before"}. ${a.note}`,
 
-  "Electrical / Power": (a) =>
-    `There is an electrical issue affecting ${a.area}. The breakers and GFCI outlets have ${a.breaker.toLowerCase() === "yes" ? "been checked" : "not been checked"}. The outlet or fixture was ${a.test.toLowerCase() === "yes" ? "tested and works" : "not tested or not working"}. There ${a.burn.toLowerCase() === "yes" ? "are signs of burning or unusual smells" : "are no signs of burning or smells"}. ${a.note}`,
+      "Electrical / Power": (a) =>
+        `There is a power issue in ${a.area}. Breakers and GFCI outlets have ${a.breaker.toLowerCase() === "yes" ? "been checked" : "not been checked"}. The outlet or fixture was ${a.test.toLowerCase() === "yes" ? "tested and works" : "not tested or not working"}. There ${a.burn.toLowerCase() === "yes" ? "are" : "are no"} signs of burning or unusual smells. ${a.note}`,
 
-  "Roof / Ceiling": (a) =>
-    `There is a roof or ceiling concern in the ${a.room}. Water is ${a.leak.toLowerCase() === "active" ? "actively leaking" : "not actively leaking"}, and the roof shows ${a.damage.toLowerCase() === "yes" ? "visible damage" : "no visible damage"}. The attic or ceiling space ${a.attic.toLowerCase() === "yes" ? "may be contributing to the issue" : "is not believed to be involved"}. ${a.note}`,
+      "Roof / Ceiling": (a) =>
+        `There is an issue in the ${a.room}. Water is ${a.leak.toLowerCase() === "active" ? "actively leaking" : "not actively leaking"}, and the roof ${a.damage.toLowerCase() === "yes" ? "shows visible damage" : "does not show visible damage"}. Attic or ceiling space involvement: ${a.attic}. ${a.note}`,
 
-  "Other": (a) =>
-    `The tenant has reported an issue outside the listed categories. Description: ${a.note}. Additional details: ${a.details}`
-};
+      "Other": (a) =>
+        `A general issue was reported. ${a.note} Additional context: ${a.details}`
+    };
 
     let currentFlow = [], answers = {}, currentIndex = 0, selectedType = "";
 
@@ -125,6 +128,9 @@ const summaries = {
     });
 
     function askQuestion() {
+      while (currentIndex < currentFlow.length && currentFlow[currentIndex].condition && !currentFlow[currentIndex].condition(answers)) {
+        currentIndex++;
+      }
       if (currentIndex < currentFlow.length) {
         document.getElementById("questionText").innerText = currentFlow[currentIndex].q;
         document.getElementById("answerInput").value = "";
@@ -145,7 +151,7 @@ const summaries = {
     function showSummary() {
       document.getElementById("questionBox").classList.add("hidden");
       document.getElementById("summarySection").classList.remove("hidden");
-      let summary = summaries[selectedType](answers);
+      const summary = summaries[selectedType](answers);
       document.getElementById("summaryText").innerText = summary;
     }
 
