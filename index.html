@@ -80,7 +80,11 @@
       "Oven / Stove": (a) => {
         let note = a.note ? `They added: "${capitalizeFirst(a.note)}."` : "No further notes were provided.";
         let summary = `The tenant reports a problem with the ${a.type || 'unknown type'} oven/stove. `;
-        if (a.power) summary += `They stated that "${a.power}". `;
+        if (a.power && a.power.toLowerCase() === "no") {
+      summary += "None of the burners or the oven are working. ";
+    } else if (a.power) {
+      summary += `They stated that: "${a.power}". `;
+    }
         if (a.type && a.type.toLowerCase() === "gas" && a.pilot)
           summary += `The pilot light is ${a.pilot.toLowerCase() === "yes" ? "lit" : "not lit"}. `;
         if (a.breaker) summary += `Breaker is ${a.breaker.toLowerCase() === "yes" ? "on" : "off"}. `;
