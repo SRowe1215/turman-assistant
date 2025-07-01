@@ -89,15 +89,28 @@
       ]
     };
 
-    const summaries = {
-      "Refrigerator": (a) => `Fridge issue. Running: ${a.running}. Light: ${a.light}. Outlet tested: ${a.outlet}. Breaker: ${a.breaker}. Notes: ${a.note}`,
-      "Oven / Stove": (a) => `${a.type} oven/stove. Power: ${a.power}. Pilot: ${a.pilot}. Breaker: ${a.breaker}. Notes: ${a.note}`,
-      "AC / Heat": (a) => `HVAC issue. Temp extreme: ${a.priority}. Air blowing: ${a.air}. Thermostat: ${a.thermostat}. Breakers reset: ${a.breaker}. Outdoor unit: ${a.outdoor_unit}. Notes: ${a.note}`,
-      "Plumbing / Leak": (a) => `Leak from ${a.source}. Valve shutoff: ${a.shutoff}. Leak rate: ${a.rate}. Recurring: ${a.recurring}. Notes: ${a.note}`,
-      "Electrical / Power": (a) => `Electrical issue in ${a.area}. Breakers/GFCIs checked: ${a.breaker}. Outlet/fixture test: ${a.test}. Burn/smell: ${a.burn}. Notes: ${a.note}`,
-      "Roof / Ceiling": (a) => `Roof/Ceiling issue in ${a.room}. Leak status: ${a.leak}. Roof damage: ${a.damage}. Attic cause: ${a.attic}. Notes: ${a.note}`,
-      "Other": (a) => `Other issue reported. Notes: ${a.note}. Additional details: ${a.details}`
-    };
+const summaries = {
+  "Refrigerator": (a) => 
+    `The refrigerator is experiencing an issue. It is ${a.running.toLowerCase() === "yes" ? "running" : "not running"} and the interior light ${a.light.toLowerCase() === "yes" ? "turns on" : "does not turn on"} when the door opens. The outlet was ${a.outlet.toLowerCase() === "yes" ? "tested and is working" : "not tested or not working"}, and the breaker is ${a.breaker}. ${a.note}`,
+
+  "Oven / Stove": (a) =>
+    `There is an issue with the ${a.type.toLowerCase()} oven/stove. ${a.power.toLowerCase() === "yes" ? "Some components are working" : "None of the burners or oven are working"}. The pilot light is ${a.pilot.toLowerCase() === "yes" ? "lit" : "not lit"}, and the breaker is ${a.breaker}. ${a.note}`,
+
+  "AC / Heat": (a) =>
+    `The HVAC system is having trouble. The outside temperature is extreme (${a.priority}). Air is ${a.air.toLowerCase() === "yes" ? "blowing" : "not blowing"} through the vents. The thermostat is ${a.thermostat.toLowerCase() === "yes" ? "on" : "off"}, and the breakers have been ${a.breaker}. The outdoor unit is ${a.outdoor_unit}. ${a.note}`,
+
+  "Plumbing / Leak": (a) =>
+    `There is a leak coming from ${a.source}. The water valve has ${a.shutoff.toLowerCase() === "yes" ? "been shut off" : "not been shut off"}. The leak is a ${a.rate}, and it ${a.recurring.toLowerCase() === "yes" ? "has happened before" : "is a new issue"}. ${a.note}`,
+
+  "Electrical / Power": (a) =>
+    `There is an electrical issue affecting ${a.area}. The breakers and GFCI outlets have ${a.breaker.toLowerCase() === "yes" ? "been checked" : "not been checked"}. The outlet or fixture was ${a.test.toLowerCase() === "yes" ? "tested and works" : "not tested or not working"}. There ${a.burn.toLowerCase() === "yes" ? "are signs of burning or unusual smells" : "are no signs of burning or smells"}. ${a.note}`,
+
+  "Roof / Ceiling": (a) =>
+    `There is a roof or ceiling concern in the ${a.room}. Water is ${a.leak.toLowerCase() === "active" ? "actively leaking" : "not actively leaking"}, and the roof shows ${a.damage.toLowerCase() === "yes" ? "visible damage" : "no visible damage"}. The attic or ceiling space ${a.attic.toLowerCase() === "yes" ? "may be contributing to the issue" : "is not believed to be involved"}. ${a.note}`,
+
+  "Other": (a) =>
+    `The tenant has reported an issue outside the listed categories. Description: ${a.note}. Additional details: ${a.details}`
+};
 
     let currentFlow = [], answers = {}, currentIndex = 0, selectedType = "";
 
