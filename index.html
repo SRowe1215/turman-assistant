@@ -1,1 +1,143 @@
-Placeholder for Turman Work Order Assistant - ready for GitHub Pages hosting.
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Turman Work Order Assistant</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 2em; }
+    h1 { text-align: center; }
+    select, button, textarea { width: 100%; padding: 10px; margin-top: 10px; }
+    .hidden { display: none; }
+    .summary-box { white-space: pre-wrap; background: #f9f9f9; padding: 10px; margin-top: 20px; border: 1px solid #ccc; }
+  </style>
+</head>
+<body>
+  <h1>Turman Work Order Assistant</h1>
+  <label for="issueType">Select Issue Type:</label>
+  <select id="issueType">
+    <option value="">-- Choose an issue --</option>
+    <option value="Refrigerator">Refrigerator</option>
+    <option value="Oven / Stove">Oven / Stove</option>
+    <option value="AC / Heat">AC / Heat</option>
+    <option value="Plumbing / Leak">Plumbing / Leak</option>
+    <option value="Electrical / Power">Electrical / Power</option>
+    <option value="Roof / Ceiling">Roof / Ceiling</option>
+    <option value="Other">Other</option>
+  </select>
+  <div id="questionBox" class="hidden">
+    <p id="questionText"></p>
+    <input type="text" id="answerInput" />
+    <button onclick="submitAnswer()">Submit Answer</button>
+  </div>
+  <div id="summarySection" class="hidden">
+    <h2>Summary</h2>
+    <div id="summaryText" class="summary-box"></div>
+    <button onclick="copySummary()">Copy Summary</button>
+    <button onclick="location.reload()">Start Over</button>
+  </div>
+
+  <script>
+    const flows = {
+      "Refrigerator": [
+        { q: "Is the fridge running or making any noise?", key: "running" },
+        { q: "Does the interior light turn on when the door opens?", key: "light" },
+        { q: "Have you tested the outlet with another device?", key: "outlet" },
+        { q: "Is the breaker in the 'on' position?", key: "breaker" },
+        { q: "Describe the fridge issue:", key: "note" }
+      ],
+      "Oven / Stove": [
+        { q: "Gas or electric?", key: "type" },
+        { q: "Do any burners or the oven turn on?", key: "power" },
+        { q: "If gas, is the pilot light lit?", key: "pilot" },
+        { q: "Is the breaker on?", key: "breaker" },
+        { q: "Describe the oven/stove issue:", key: "note" }
+      ],
+      "AC / Heat": [
+        { q: "Is it over 85°F or under 60°F outside?", key: "priority" },
+        { q: "Is any air blowing through the vents?", key: "air" },
+        { q: "Is the thermostat display on?", key: "thermostat" },
+        { q: "Have you reset the breakers?", key: "breaker" },
+        { q: "Do you hear noise from the outdoor unit?", key: "outdoor_unit" },
+        { q: "Describe the HVAC issue:", key: "note" }
+      ],
+      "Plumbing / Leak": [
+        { q: "Where is the water leak coming from?", key: "source" },
+        { q: "Have you shut off the water valve?", key: "shutoff" },
+        { q: "Is the leak active or slow drip?", key: "rate" },
+        { q: "Has this happened before?", key: "recurring" },
+        { q: "Describe the plumbing issue:", key: "note" }
+      ],
+      "Electrical / Power": [
+        { q: "Is power out in the entire unit or just one area?", key: "area" },
+        { q: "Have you checked all breakers and GFCIs?", key: "breaker" },
+        { q: "Did you test the outlet/fixture with another device?", key: "test" },
+        { q: "Any burn marks or smells?", key: "burn" },
+        { q: "Describe the electrical issue:", key: "note" }
+      ],
+      "Roof / Ceiling": [
+        { q: "Which room has signs of leak/damage?", key: "room" },
+        { q: "Is water actively leaking or stained?", key: "leak" },
+        { q: "Visible damage to roof (shingles, limbs)?", key: "damage" },
+        { q: "Anything in attic causing it (HVAC, pipes)?", key: "attic" },
+        { q: "Describe the roof/ceiling issue:", key: "note" }
+      ],
+      "Other": [
+        { q: "Briefly describe the issue:", key: "note" },
+        { q: "Anything else that might help?", key: "details" }
+      ]
+    };
+
+    let currentFlow = [];
+    let answers = {};
+    let currentIndex = 0;
+    let selectedType = "";
+
+    document.getElementById("issueType").addEventListener("change", function () {
+      selectedType = this.value;
+      if (!selectedType) return;
+      currentFlow = flows[selectedType];
+      answers = {};
+      currentIndex = 0;
+      document.getElementById("questionBox").classList.remove("hidden");
+      askQuestion();
+    });
+
+    function askQuestion() {
+      if (currentIndex < currentFlow.length) {
+        document.getElementById("questionText").innerText = currentFlow[currentIndex].q;
+        document.getElementById("answerInput").value = "";
+      } else {
+        showSummary();
+      }
+    }
+
+    function submitAnswer() {
+      const key = currentFlow[currentIndex].key;
+      const val = document.getElementById("answerInput").value.trim();
+      if (!val) return;
+      answers[key] = val;
+      currentIndex++;
+      askQuestion();
+    }
+
+    function showSummary() {
+      document.getElementById("questionBox").classList.add("hidden");
+      document.getElementById("summarySection").classList.remove("hidden");
+      let summary = `Issue Type: ${selectedType}
+`;
+      for (const [k, v] of Object.entries(answers)) {
+        summary += `- ${k}: ${v}
+`;
+      }
+      document.getElementById("summaryText").innerText = summary;
+    }
+
+    function copySummary() {
+      const text = document.getElementById("summaryText").innerText;
+      navigator.clipboard.writeText(text).then(() => alert("Summary copied!"));
+    }
+  </script>
+</body>
+</html>
