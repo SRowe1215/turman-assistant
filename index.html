@@ -1,1 +1,150 @@
-<!DOCTYPE html> <html lang="en"> <head> <meta charset="UTF-8" /> <meta name="viewport" content="width=device-width, initial-scale=1.0"/> <title>Turman Work Order Assistant</title> <style> body { font-family: "Times New Roman", Times, serif; max-width: 600px; margin: auto; padding: 2em; } h1 { text-align: center; } select, button, input { width: 100%; padding: 10px; margin-top: 10px; font-family: "Times New Roman", Times, serif; } .hidden { display: none; } .summary-box { white-space: pre-wrap; background: #f9f9f9; padding: 10px; margin-top: 20px; border: 1px solid #ccc; } img.logo { display: block; margin: auto; height: 60px; } </style> </head> <body> <img src="https://www.turmanco.com/assets/TRCO%20Logo.jpg" alt="Turman Realty Logo" class="logo"/> <h1>Turman Work Order Assistant</h1> <label for="issueType">Select Issue Type:</label> <select id="issueType"> <option value="">-- Choose an issue --</option> <option value="Refrigerator">Refrigerator</option> <option value="Oven / Stove">Oven / Stove</option> <option value="AC / Heat">AC / Heat</option> <option value="Plumbing / Leak">Plumbing / Leak</option> <option value="Electrical / Power">Electrical / Power</option> <option value="Roof / Ceiling">Roof / Ceiling</option> <option value="Other">Other</option> </select> <div id="questionBox" class="hidden"> <p id="questionText"></p> <input type="text" id="answerInput" autocomplete="on" spellcheck="true"/> <button onclick="submitAnswer()">Submit Answer</button> </div> <div id="summarySection" class="hidden"> <h2>Summary</h2> <div id="summaryText" class="summary-box"></div> <button onclick="copySummary()">Copy Summary</button> <button onclick="location.reload()">Start Over</button> </div> <script> const flows = { "Refrigerator": [ { q: "Is the fridge running or making any noise?", key: "running" }, { q: "Does the interior light turn on when the door opens?", key: "light" }, { q: "Have you tested the outlet with another device?", key: "outlet" }, { q: "Is the breaker in the 'on' position?", key: "breaker" }, { q: "Describe the fridge issue:", key: "note" } ], "Oven / Stove": [ { q: "Is it gas or electric?", key: "type" }, { q: "Do any burners or the oven turn on?", key: "power" }, { q: "If gas, is the pilot light lit?", key: "pilot", conditional: (answers) => answers["type"]?.toLowerCase() === "gas" }, { q: "Is the breaker on?", key: "breaker" }, { q: "Describe the oven/stove issue:", key: "note" } ], "AC / Heat": [ { q: "Is it over 85°F or under 60°F outside?", key: "priority" }, { q: "Is any air blowing through the vents?", key: "air" }, { q: "Is the thermostat display on?", key: "thermostat" }, { q: "Have you reset the breakers?", key: "breaker" }, { q: "Do you hear noise from the outdoor unit?", key: "outdoor_unit" }, { q: "Describe the HVAC issue:", key: "note" } ], "Plumbing / Leak": [ { q: "Where is the water leak coming from?", key: "source" }, { q: "Have you shut off the water valve?", key: "shutoff" }, { q: "Is the leak active or slow drip?", key: "rate" }, { q: "Has this happened before?", key: "recurring" }, { q: "Describe the plumbing issue:", key: "note" } ], "Electrical / Power": [ { q: "Is power out in the entire unit or just one area?", key: "area" }, { q: "Have you checked all breakers and GFCIs?", key: "breaker" }, { q: "Did you test the outlet/fixture with another device?", key: "test" }, { q: "Any burn marks or smells?", key: "burn" }, { q: "Describe the electrical issue:", key: "note" } ], "Roof / Ceiling": [ { q: "Which room has signs of leak/damage?", key: "room" }, { q: "Is water actively leaking or stained?", key: "leak" }, { q: "Visible damage to roof (shingles, limbs)?", key: "damage" }, { q: "Anything in attic causing it (HVAC, pipes)?", key: "attic" }, { q: "Describe the roof/ceiling issue:", key: "note" } ], "Other": [ { q: "Briefly describe the issue:", key: "note" }, { q: "Anything else that might help?", key: "details" } ] }; const smarten = (text) => { return text .replace(/\bovn\b/gi, "oven") .replace(/\bpls\b/gi, "please") .replace(/\bfrige\b/gi, "fridge") .replace(/\s{2,}/g, " ") .replace(/(?:^|\.\s*)([a-z])/g, (m, p1) => m.replace(p1, p1.toUpperCase())); }; const summaries = { "Refrigerator": (a) => `There is a refrigerator issue. The unit is ${a.running}. Interior light: ${a.light}. Outlet tested: ${a.outlet}. Breaker: ${a.breaker}. Description: ${smarten(a.note)}`, "Oven / Stove": (a) => `There is an issue with the ${a.type?.toLowerCase()} oven/stove. Functionality: ${a.power}. ${a.type?.toLowerCase() === "gas" ? "Pilot light: " + a.pilot + ". " : ""}Breaker: ${a.breaker}. Additional notes: ${smarten(a.note)}`, "AC / Heat": (a) => `There is an HVAC issue. Temperature outside: ${a.priority}. Airflow: ${a.air}. Thermostat display: ${a.thermostat}. Breaker reset: ${a.breaker}. Outdoor unit noise: ${a.outdoor_unit}. Notes: ${smarten(a.note)}`, "Plumbing / Leak": (a) => `There is a plumbing issue from ${a.source}. Water shutoff: ${a.shutoff}. Leak rate: ${a.rate}. Recurring: ${a.recurring}. Notes: ${smarten(a.note)}`, "Electrical / Power": (a) => `There is an electrical issue in ${a.area}. Breakers/GFCIs checked: ${a.breaker}. Device tested: ${a.test}. Smells or burns: ${a.burn}. Notes: ${smarten(a.note)}`, "Roof / Ceiling": (a) => `There is a roof/ceiling issue in ${a.room}. Leak status: ${a.leak}. Roof damage: ${a.damage}. Attic cause: ${a.attic}. Notes: ${smarten(a.note)}`, "Other": (a) => `Other issue reported. Notes: ${smarten(a.note)}. Additional details: ${smarten(a.details)}` }; let currentFlow = [], answers = {}, currentIndex = 0, selectedType = ""; document.getElementById("issueType").addEventListener("change", function () { selectedType = this.value; if (!selectedType) return; currentFlow = flows[selectedType]; answers = {}; currentIndex = 0; document.getElementById("questionBox").classList.remove("hidden"); askQuestion(); }); document.getElementById("answerInput").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); submitAnswer(); } }); function askQuestion() { while (currentIndex < currentFlow.length) { const { q, key, conditional } = currentFlow[currentIndex]; if (conditional && !conditional(answers)) { currentIndex++; continue; } document.getElementById("questionText").innerText = q; document.getElementById("answerInput").value = ""; return; } showSummary(); } function submitAnswer() { const key = currentFlow[currentIndex].key; const val = document.getElementById("answerInput").value.trim(); if (!val) return; answers[key] = val; currentIndex++; askQuestion(); } function showSummary() { document.getElementById("questionBox").classList.add("hidden"); document.getElementById("summarySection").classList.remove("hidden"); let summary = summaries[selectedType](answers); document.getElementById("summaryText").innerText = summary; } function copySummary() { const text = document.getElementById("summaryText").innerText; navigator.clipboard.writeText(text).then(() => alert("Summary copied!")); } </script> </body> </html>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Turman Work Order Assistant</title>
+  <style>
+    body {
+      font-family: 'Times New Roman', serif;
+      max-width: 700px;
+      margin: auto;
+      padding: 2em;
+      background: #fff;
+    }
+    h1 {
+      text-align: center;
+    }
+    img.logo {
+      display: block;
+      margin: 0 auto 1em auto;
+      max-width: 200px;
+    }
+    select, button, input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      font-family: 'Times New Roman', serif;
+    }
+    .hidden {
+      display: none;
+    }
+    .summary-box {
+      white-space: pre-wrap;
+      background: #f9f9f9;
+      padding: 10px;
+      margin-top: 20px;
+      border: 1px solid #ccc;
+    }
+  </style>
+</head>
+<body>
+  <img src="https://www.turmanco.com/images/logo.png" alt="Turman Realty Logo" class="logo" />
+  <h1>Turman Work Order Assistant</h1>
+  <label for="issueType">Select Issue Type:</label>
+  <select id="issueType">
+    <option value="">-- Choose an issue --</option>
+    <option value="Refrigerator">Refrigerator</option>
+    <option value="Oven / Stove">Oven / Stove</option>
+    <option value="AC / Heat">AC / Heat</option>
+    <option value="Plumbing / Leak">Plumbing / Leak</option>
+    <option value="Electrical / Power">Electrical / Power</option>
+    <option value="Roof / Ceiling">Roof / Ceiling</option>
+    <option value="Other">Other</option>
+  </select>
+  <div id="questionBox" class="hidden">
+    <p id="questionText"></p>
+    <input type="text" id="answerInput" spellcheck="true" />
+    <button onclick="submitAnswer()">Submit Answer</button>
+  </div>
+  <div id="summarySection" class="hidden">
+    <h2>Summary</h2>
+    <div id="summaryText" class="summary-box"></div>
+    <button onclick="copySummary()">Copy Summary</button>
+    <button onclick="location.reload()">Start Over</button>
+  </div>
+
+  <script>
+    const flows = {
+      "Oven / Stove": [
+        { q: "Is it gas or electric?", key: "type" },
+        { q: "Do any burners or the oven turn on?", key: "power" },
+        { q: "If gas, is the pilot light lit?", key: "pilot", conditional: (a) => a.type && a.type.toLowerCase() === "gas" },
+        { q: "Is the breaker on?", key: "breaker" },
+        { q: "Describe the oven/stove issue:", key: "note" }
+      ]
+    };
+
+    const summaries = {
+      "Oven / Stove": (a) => {
+        let note = a.note ? `They added: "${capitalizeFirst(a.note)}."` : "No further notes were provided.";
+        let summary = `The tenant reports a problem with the ${a.type || 'unknown type'} oven/stove. `;
+        if (a.power) summary += `They stated that "${a.power}". `;
+        if (a.type && a.type.toLowerCase() === "gas" && a.pilot)
+          summary += `The pilot light is ${a.pilot.toLowerCase() === "yes" ? "lit" : "not lit"}. `;
+        if (a.breaker) summary += `Breaker is ${a.breaker.toLowerCase() === "yes" ? "on" : "off"}. `;
+        return summary + note;
+      }
+    };
+
+    function capitalizeFirst(text) {
+      return text.charAt(0).toUpperCase() + text.slice(1);
+    }
+
+    let currentFlow = [], answers = {}, currentIndex = 0, selectedType = "";
+
+    document.getElementById("issueType").addEventListener("change", function () {
+      selectedType = this.value;
+      if (!selectedType) return;
+      currentFlow = flows[selectedType];
+      answers = {};
+      currentIndex = 0;
+      document.getElementById("summarySection").classList.add("hidden");
+      document.getElementById("questionBox").classList.remove("hidden");
+      askQuestion();
+    });
+
+    function askQuestion() {
+      while (currentIndex < currentFlow.length && currentFlow[currentIndex].conditional && !currentFlow[currentIndex].conditional(answers)) {
+        currentIndex++;
+      }
+      if (currentIndex < currentFlow.length) {
+        document.getElementById("questionText").innerText = currentFlow[currentIndex].q;
+        document.getElementById("answerInput").value = "";
+        document.getElementById("answerInput").focus();
+      } else {
+        showSummary();
+      }
+    }
+
+    function submitAnswer() {
+      const key = currentFlow[currentIndex].key;
+      const val = document.getElementById("answerInput").value.trim();
+      if (!val) return;
+      answers[key] = val;
+      currentIndex++;
+      askQuestion();
+    }
+
+    function showSummary() {
+      document.getElementById("questionBox").classList.add("hidden");
+      document.getElementById("summarySection").classList.remove("hidden");
+      const summary = summaries[selectedType](answers);
+      document.getElementById("summaryText").innerText = summary;
+    }
+
+    function copySummary() {
+      const text = document.getElementById("summaryText").innerText;
+      navigator.clipboard.writeText(text).then(() => alert("Summary copied!"));
+    }
+
+    document.getElementById("answerInput").addEventListener("keypress", function(e) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        submitAnswer();
+      }
+    });
+  </script>
+</body>
+</html>
