@@ -8,7 +8,7 @@
   <style>
     body { font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 2em; }
     h1 { text-align: center; }
-    select, button, textarea { width: 100%; padding: 10px; margin-top: 10px; }
+    select, button, input { width: 100%; padding: 10px; margin-top: 10px; }
     .hidden { display: none; }
     .summary-box { white-space: pre-wrap; background: #f9f9f9; padding: 10px; margin-top: 20px; border: 1px solid #ccc; }
   </style>
@@ -89,10 +89,17 @@
       ]
     };
 
-    let currentFlow = [];
-    let answers = {};
-    let currentIndex = 0;
-    let selectedType = "";
+    const summaries = {
+      "Refrigerator": (a) => `Fridge issue. Running: ${a.running}. Light: ${a.light}. Outlet tested: ${a.outlet}. Breaker: ${a.breaker}. Notes: ${a.note}`,
+      "Oven / Stove": (a) => `${a.type} oven/stove. Power: ${a.power}. Pilot: ${a.pilot}. Breaker: ${a.breaker}. Notes: ${a.note}`,
+      "AC / Heat": (a) => `HVAC issue. Temp extreme: ${a.priority}. Air blowing: ${a.air}. Thermostat: ${a.thermostat}. Breakers reset: ${a.breaker}. Outdoor unit: ${a.outdoor_unit}. Notes: ${a.note}`,
+      "Plumbing / Leak": (a) => `Leak from ${a.source}. Valve shutoff: ${a.shutoff}. Leak rate: ${a.rate}. Recurring: ${a.recurring}. Notes: ${a.note}`,
+      "Electrical / Power": (a) => `Electrical issue in ${a.area}. Breakers/GFCIs checked: ${a.breaker}. Outlet/fixture test: ${a.test}. Burn/smell: ${a.burn}. Notes: ${a.note}`,
+      "Roof / Ceiling": (a) => `Roof/Ceiling issue in ${a.room}. Leak status: ${a.leak}. Roof damage: ${a.damage}. Attic cause: ${a.attic}. Notes: ${a.note}`,
+      "Other": (a) => `Other issue reported. Notes: ${a.note}. Additional details: ${a.details}`
+    };
+
+    let currentFlow = [], answers = {}, currentIndex = 0, selectedType = "";
 
     document.getElementById("issueType").addEventListener("change", function () {
       selectedType = this.value;
@@ -125,12 +132,7 @@
     function showSummary() {
       document.getElementById("questionBox").classList.add("hidden");
       document.getElementById("summarySection").classList.remove("hidden");
-      let summary = `Issue Type: ${selectedType}
-`;
-      for (const [k, v] of Object.entries(answers)) {
-        summary += `- ${k}: ${v}
-`;
-      }
+      let summary = summaries[selectedType](answers);
       document.getElementById("summaryText").innerText = summary;
     }
 
