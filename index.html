@@ -90,7 +90,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/emailjs-com@2.6.4/dist/email.min.js"></script>
   <script>
-    emailjs.init("bBYfl0lnqtkXqqhQQ");
+    emailjs.init("bBYfl0lnqtkXqqhQQ"); // Your public API key
 
     const flows = {
       "Refrigerator": [
@@ -142,13 +142,20 @@
     };
 
     const summaries = {
-      "Refrigerator": (a) => `Fridge issue: Running – ${a.running}. Light – ${a.light}. Outlet tested – ${a.outlet}. Breaker – ${a.breaker}. Notes: ${a.note}.`,
-      "Oven / Stove": (a) => `There is an issue with the ${a.type || 'oven/stove'}. What’s not working: ${a.function || 'unspecified'}. Breaker: ${a.breaker || 'unknown'}. Notes: ${a.note || ''}.`,
-      "AC / Heat": (a) => `HVAC issue. Outside temp: ${a.priority}. Air blowing: ${a.air}. Thermostat: ${a.thermostat}. Breakers: ${a.breaker}. Noise from unit: ${a.unit}. Notes: ${a.note}`,
-      "Plumbing / Leak": (a) => `Plumbing issue near: ${a.source}. Shutoff valve: ${a.shutoff}. Flow type: ${a.flow}. Repeat issue: ${a.repeat}. Notes: ${a.note}`,
-      "Electrical / Power": (a) => `Electrical issue in: ${a.area}. Breakers/GFCIs: ${a.breaker}. Outlet test: ${a.test}. Burn marks/smell: ${a.burn}. Notes: ${a.note}`,
-      "Roof / Ceiling": (a) => `Roof/Ceiling issue in: ${a.room}. Leak type: ${a.leak}. Roof damage: ${a.damage}. Attic issue: ${a.attic}. Notes: ${a.note}`,
-      "Other": (a) => `Other issue: ${a.note || ''}. Extra info: ${a.details || ''}`
+      "Refrigerator": (a) =>
+        `Tenant reports that the refrigerator is ${a.running}. The interior light ${a.light}. They ${a.outlet} tested the outlet with another device. The breaker is ${a.breaker}. Notes: ${a.note}.`,
+      "Oven / Stove": (a) =>
+        `Tenant reports an issue with a ${a.type} oven/stove. The problem involves: ${a.function}. The breaker is ${a.breaker}. Additional notes: ${a.note}.`,
+      "AC / Heat": (a) =>
+        `Tenant reports HVAC concerns. Outdoor temperature is ${a.priority}. Air is ${a.air} through the vents. Thermostat display is ${a.thermostat}. Breakers have ${a.breaker}. Outdoor unit is ${a.unit}. Additional notes: ${a.note}.`,
+      "Plumbing / Leak": (a) =>
+        `Tenant reports a ${a.flow} leak coming from ${a.source}. Shutoff valve has ${a.shutoff}. This ${a.repeat === 'Yes' ? 'has happened before' : 'has not happened before'}. Additional notes: ${a.note}.`,
+      "Electrical / Power": (a) =>
+        `Tenant reports electrical issues in ${a.area}. Breakers and GFCIs have ${a.breaker}. The outlet or light was ${a.test} tested. There ${a.burn === 'Yes' ? 'are' : 'are no'} smells or burn marks. Additional notes: ${a.note}.`,
+      "Roof / Ceiling": (a) =>
+        `Tenant reports signs of a leak in the ${a.room}. The area is ${a.leak}. Visible roof damage: ${a.damage}. Possible attic source: ${a.attic}. Additional notes: ${a.note}.`,
+      "Other": (a) =>
+        `Tenant reports: ${a.note}. Additional information: ${a.details}.`
     };
 
     let currentFlow = [], answers = {}, currentIndex = 0, selectedType = "";
