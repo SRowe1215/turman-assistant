@@ -1,90 +1,126 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Turman Tenant Work Order Request</title>
-  <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+  <title>Turman Work Order Assistant</title>
   <style>
-    body {
-      font-family: Times New Roman, serif;
-      max-width: 600px;
-      margin: auto;
-      padding: 2em;
+    body { font-family: 'Times New Roman', serif; max-width: 700px; margin: auto; padding: 2em; background: #fff; color: #000; }
+    h1, h2 { text-align: center; }
+    input, select, button, textarea {
+      width: 100%; padding: 10px; margin: 10px 0; font-family: 'Times New Roman', serif;
     }
-    h1 {
-      text-align: center;
-    }
-    label {
-      display: block;
-      margin-top: 1em;
-      font-weight: bold;
-    }
-    input, textarea, select, button {
-      width: 100%;
-      padding: 0.6em;
-      margin-top: 0.4em;
-      font-family: Times New Roman, serif;
-      font-size: 1em;
-    }
-    .hidden {
-      display: none;
-    }
-    .note {
-      font-size: 0.9em;
-      color: #666;
-      margin-top: 0.3em;
-    }
+    .section { margin-bottom: 20px; }
+    .hidden { display: none; }
+    .confirmation { padding: 1em; border: 1px solid #ccc; background: #f0f0f0; margin-top: 20px; }
+    label { font-weight: bold; }
   </style>
 </head>
 <body>
-  <h1>Tenant Work Order Request</h1>
+  <h1>Turman Work Order Assistant</h1>
   <form id="workOrderForm">
-    <label for="tenant_name">Your Name</label>
-    <input type="text" id="tenant_name" name="tenant_name" required>
+    <div class="section">
+      <label for="tenant_name">Name:</label>
+      <input type="text" id="tenant_name" name="tenant_name" required />
 
-    <label for="tenant_address">Street Address</label>
-    <input type="text" id="tenant_address" name="tenant_address" required>
+      <label for="address">Address:</label>
+      <input type="text" id="address" name="address" required />
 
-    <label for="tenant_unit">Unit (if applicable)</label>
-    <input type="text" id="tenant_unit" name="tenant_unit">
+      <label for="unit">Unit:</label>
+      <input type="text" id="unit" name="unit" />
 
-    <label for="tenant_phone">Phone Number</label>
-    <input type="tel" id="tenant_phone" name="tenant_phone" required>
+      <label for="phone">Phone Number:</label>
+      <input type="tel" id="phone" name="phone" required />
 
-    <label for="tenant_email">Email Address</label>
-    <input type="email" id="tenant_email" name="tenant_email" required>
+      <label for="tenant_email">Email:</label>
+      <input type="email" id="tenant_email" name="tenant_email" required />
+    </div>
 
-    <label for="issue_summary">Please describe your issue(s)</label>
-    <textarea id="issue_summary" name="issue_summary" rows="5" required></textarea>
+    <div class="section" id="issueSection">
+      <label for="issue_type">What type of issue are you having?</label>
+      <select id="issue_type" name="issue_type" required onchange="showFollowUp(this.value)">
+        <option value="">-- Select an issue --</option>
+        <option value="AC / Heat">AC / Heat</option>
+        <option value="Refrigerator">Refrigerator</option>
+        <option value="Oven / Stove">Oven / Stove</option>
+        <option value="Plumbing / Leak">Plumbing / Leak</option>
+        <option value="Electrical / Power">Electrical / Power</option>
+        <option value="Roof / Ceiling">Roof / Ceiling</option>
+        <option value="Other">Other</option>
+      </select>
 
-    <label for="additional_notes">Anything else the vendor should know?</label>
-    <textarea id="additional_notes" name="additional_notes" rows="3"></textarea>
+      <div id="followUp"></div>
+    </div>
 
-    <label for="photo_url">Photo (Google Drive, Dropbox, etc.)</label>
-    <input type="url" id="photo_url" name="photo_url" placeholder="Paste image link">
-    <div class="note">Uploading a photo helps us respond faster. Strongly encouraged but optional.</div>
+    <div class="section">
+      <label for="photo">Upload a photo (optional but recommended):</label>
+      <input type="file" id="photo" name="photo" accept="image/*" />
+    </div>
 
     <button type="submit">Submit Request</button>
-    <div id="confirmation" class="hidden">
-      <p>We have received your request and it will be processed in priority order.</p>
-    </div>
   </form>
 
+  <div id="confirmation" class="hidden confirmation">
+    <p>We have received your request and it will be processed in priority order.</p>
+  </div>
+
+  <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
   <script>
-    emailjs.init("bBYfl0lnqtkXqqhQQ"); // Your EmailJS public key
+    emailjs.init("bBYfl0lnqtkXqqhQQ");
 
-    document.getElementById('workOrderForm').addEventListener('submit', function (e) {
-      e.preventDefault();
+    const followUps = {
+      "AC / Heat": "Is it blowing air? Is the thermostat working? Any unusual noises or smells?",
+      "Refrigerator": "Is the fridge running? Is it cold? Lights working?",
+      "Oven / Stove": "Gas or electric? What isn't working? Breaker checked?",
+      "Plumbing / Leak": "Where is the leak? Is it slow or active? Have you shut off the water?",
+      "Electrical / Power": "What isn't working? Whole unit or partial? Have you checked the breaker?",
+      "Roof / Ceiling": "Which room? Active leak or stain? Can you see roof damage?",
+      "Other": "Please describe the issue in detail."
+    };
 
-      emailjs.sendForm('service_gm4dva6', 'template_fuki8ci', this)
-        .then(() => {
-          document.getElementById('confirmation').classList.remove('hidden');
-          document.getElementById('workOrderForm').reset();
-        }, (error) => {
-          alert("There was an error submitting the form. Please try again.");
-          console.log('FAILED...', error);
-        });
+    function showFollowUp(type) {
+      const container = document.getElementById('followUp');
+      container.innerHTML = followUps[type] ? `<label>More Details:</label><textarea name="details" required placeholder="${followUps[type]}"></textarea>` : '';
+    }
+
+    document.getElementById("workOrderForm").addEventListener("submit", function(event) {
+      event.preventDefault();
+
+      const form = event.target;
+      const formData = new FormData(form);
+      const details = form.querySelector("textarea")?.value || "";
+      const photo = formData.get("photo");
+
+      const message = `
+New Work Order Request
+Name: ${formData.get("tenant_name")}
+Address: ${formData.get("address")}
+Unit: ${formData.get("unit")}
+Phone: ${formData.get("phone")}
+Email: ${formData.get("tenant_email")}
+
+--- Issue Summary ---
+Issue Type: ${formData.get("issue_type")}
+Details: ${details}
+Photo: ${photo && photo.name ? "[Photo uploaded]" : "None"}
+`;
+
+      emailjs.send("service_gm4dva6", "template_fuki8ci", {
+        tenant_name: formData.get("tenant_name"),
+        address: formData.get("address"),
+        unit: formData.get("unit"),
+        phone: formData.get("phone"),
+        tenant_email: formData.get("tenant_email"),
+        issue_type: formData.get("issue_type"),
+        details: details,
+        photo_name: photo?.name || "None"
+      }).then(() => {
+        document.getElementById("workOrderForm").classList.add("hidden");
+        document.getElementById("confirmation").classList.remove("hidden");
+      }).catch(error => {
+        alert("Error sending work order: " + JSON.stringify(error));
+      });
     });
   </script>
 </body>
