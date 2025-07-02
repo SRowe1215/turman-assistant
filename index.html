@@ -78,8 +78,10 @@
     <div id="summarySection" class="hidden section">
       <h2>Summary</h2>
       <div id="summaryText" class="summary-box"></div>
-      <label>Upload Photo (optional but encouraged):</label>
-      <input type="file" id="photo" accept="image/*" />
+      <p style="margin-top: 10px; font-style: italic;">
+        If you have photos to include, please email them to 
+        <a href="mailto:wo@turmanco.com">wo@turmanco.com</a> or text (706) 943-7706.
+      </p>
       <button type="submit">Submit Work Order</button>
     </div>
   </form>
@@ -90,7 +92,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/emailjs-com@2.6.4/dist/email.min.js"></script>
   <script>
-    emailjs.init("bBYfl0lnqtkXqqhQQ"); // Your public API key
+    emailjs.init("bBYfl0lnqtkXqqhQQ");
 
     const flows = {
       "Refrigerator": [
@@ -142,20 +144,13 @@
     };
 
     const summaries = {
-      "Refrigerator": (a) =>
-        `Tenant reports that the refrigerator is ${a.running}. The interior light ${a.light}. They ${a.outlet} tested the outlet with another device. The breaker is ${a.breaker}. Notes: ${a.note}.`,
-      "Oven / Stove": (a) =>
-        `Tenant reports an issue with a ${a.type} oven/stove. The problem involves: ${a.function}. The breaker is ${a.breaker}. Additional notes: ${a.note}.`,
-      "AC / Heat": (a) =>
-        `Tenant reports HVAC concerns. Outdoor temperature is ${a.priority}. Air is ${a.air} through the vents. Thermostat display is ${a.thermostat}. Breakers have ${a.breaker}. Outdoor unit is ${a.unit}. Additional notes: ${a.note}.`,
-      "Plumbing / Leak": (a) =>
-        `Tenant reports a ${a.flow} leak coming from ${a.source}. Shutoff valve has ${a.shutoff}. This ${a.repeat === 'Yes' ? 'has happened before' : 'has not happened before'}. Additional notes: ${a.note}.`,
-      "Electrical / Power": (a) =>
-        `Tenant reports electrical issues in ${a.area}. Breakers and GFCIs have ${a.breaker}. The outlet or light was ${a.test} tested. There ${a.burn === 'Yes' ? 'are' : 'are no'} smells or burn marks. Additional notes: ${a.note}.`,
-      "Roof / Ceiling": (a) =>
-        `Tenant reports signs of a leak in the ${a.room}. The area is ${a.leak}. Visible roof damage: ${a.damage}. Possible attic source: ${a.attic}. Additional notes: ${a.note}.`,
-      "Other": (a) =>
-        `Tenant reports: ${a.note}. Additional information: ${a.details}.`
+      "Refrigerator": (a) => `Tenant reports the fridge is ${a.running}. The light ${a.light}. They ${a.outlet} tested the outlet. Breaker is ${a.breaker}. Additional note: ${a.note}.`,
+      "Oven / Stove": (a) => `Tenant reports an issue with a ${a.type || "stove/oven"}. Affected part: ${a.function}. Breaker is ${a.breaker}. Additional note: ${a.note}.`,
+      "AC / Heat": (a) => `HVAC concern. Outside temp: ${a.priority}. Air from vents: ${a.air}. Thermostat: ${a.thermostat}. Breakers: ${a.breaker}. Outdoor unit: ${a.unit}. Note: ${a.note}.`,
+      "Plumbing / Leak": (a) => `Tenant reports a ${a.flow} leak from ${a.source}. Shutoff valve: ${a.shutoff}. Prior occurrence: ${a.repeat}. Notes: ${a.note}.`,
+      "Electrical / Power": (a) => `Reported power issue affecting: ${a.area}. Breakers/GFCIs checked: ${a.breaker}. Outlet/light tested: ${a.test}. Burn/smell: ${a.burn}. Note: ${a.note}.`,
+      "Roof / Ceiling": (a) => `Ceiling concern in ${a.room}. Type: ${a.leak}. Roof damage noted: ${a.damage}. Attic cause: ${a.attic}. Notes: ${a.note}.`,
+      "Other": (a) => `Other issue described: ${a.note}. Additional details: ${a.details}.`
     };
 
     let currentFlow = [], answers = {}, currentIndex = 0, selectedType = "";
@@ -163,7 +158,7 @@
     document.getElementById("issueType").addEventListener("change", function () {
       selectedType = this.value;
       if (!selectedType) return;
-      currentFlow = flows[selectedType];
+      currentFlow = flows[selectedType] || [{ q: "Please describe your issue:", key: "note" }];
       answers = {};
       currentIndex = 0;
       document.getElementById("questionBox").classList.remove("hidden");
@@ -201,8 +196,7 @@
         tenant_unit: document.getElementById("unit").value,
         tenant_phone: document.getElementById("phone").value,
         tenant_email: document.getElementById("email").value,
-        summary: document.getElementById("summaryText").innerText,
-        photo_url: document.getElementById("photo").value || "none"
+        summary: document.getElementById("summaryText").innerText
       };
       emailjs.send("service_gm4dva6", "template_fuki8ci", params)
         .then(() => {
