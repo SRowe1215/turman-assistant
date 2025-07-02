@@ -192,21 +192,21 @@
 
     document.getElementById("workOrderForm").addEventListener("submit", function (e) {
       e.preventDefault();
-    const params = {
-  tenant_name: "Test Name",
-  tenant_address: "1234 Main St, Apt 2",
-  tenant_phone: "555-123-4567",
-  tenant_email: "test@example.com",
-  summary: "This is a test summary from the hardcoded test."
-};
-
+      const params = {
+        tenant_name: document.getElementById("name").value || "Not provided",
+        tenant_address: document.getElementById("address").value || "Not provided",
+        tenant_phone: document.getElementById("phone").value || "Not provided",
+        tenant_email: document.getElementById("email").value || "Not provided",
+        summary: document.getElementById("summaryText").innerText || "Not provided"
+      };
       emailjs.send("service_gm4dva6", "template_fuki8ci", params)
         .then(() => {
           document.getElementById("workOrderForm").classList.add("hidden");
           document.getElementById("confirmation").classList.remove("hidden");
         })
-        .catch(() => {
-          alert("Submission failed. Please check all fields or try again later.");
+        .catch((err) => {
+          console.error("EmailJS Error:", err);
+          alert("Submission failed. Please check your info and try again.");
         });
     });
   </script>
