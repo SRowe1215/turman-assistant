@@ -203,8 +203,11 @@
           document.getElementById("workOrderForm").classList.add("hidden");
           document.getElementById("confirmation").classList.remove("hidden");
         })
-        .catch((err) => alert("Submission failed. Please try again."));
-    });
+     .catch((err) => {
+  console.error('EmailJS Error:', err);
+  alert("Submission failed. Please try again.");
+});
+
   </script>
 </body>
 </html>
