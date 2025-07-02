@@ -88,10 +88,8 @@
     <h3>We have received your request and it will be processed in priority order.</h3>
   </div>
 
-  <!-- ✅ Updated EmailJS SDK -->
   <script type="module">
     import emailjs from 'https://cdn.emailjs.com/dist/email.min.mjs';
-
     emailjs.init("bBYfl0lnqtkXqqhQQ");
 
     const flows = {
@@ -135,4 +133,82 @@
         { q: "Is it actively leaking or just stained?", key: "leak" },
         { q: "Is there visible roof damage (shingles, limbs)?", key: "damage" },
         { q: "Could something in the attic be causing it (AC, pipes)?", key: "attic" },
-        { q
+        { q: "Briefly describe the issue:", key: "note" }
+      ],
+      "Other": [
+        { q: "Briefly describe your issue:", key: "note" },
+        { q: "Anything else that might help?", key: "details" }
+      ]
+    };
+
+    const summaries = {
+      "Refrigerator": (a) => `Tenant reports the fridge is ${a.running}. The interior light ${a.light}. They ${a.outlet} tested the outlet. Breaker is ${a.breaker}. ${a.note}`,
+      "Oven / Stove": (a) => {
+        const type = a.type?.toLowerCase() === "electric" ? "an electric stove or oven" :
+                     a.type?.toLowerCase() === "gas" ? "a gas stove or oven" : "a stove or oven";
+        return `Tenant reports an issue with ${type}. Affected part: ${a.function}. Breaker is ${a.breaker}. ${a.note}`;
+      },
+      "AC / Heat": (a) => `HVAC concern. Outside temp: ${a.priority}. Airflow: ${a.air}. Thermostat: ${a.thermostat}. Breakers: ${a.breaker}. Outdoor unit: ${a.unit}. ${a.note}`,
+      "Plumbing / Leak": (a) => `Tenant reports a ${a.flow} leak from ${a.source}. Shutoff valve used: ${a.shutoff}. Previous occurrence: ${a.repeat}. ${a.note}`,
+      "Electrical / Power": (a) => `Power issue in: ${a.area}. Breakers/GFCIs checked: ${a.breaker}. Tested with other device: ${a.test}. Signs of burning or smell: ${a.burn}. ${a.note}`,
+      "Roof / Ceiling": (a) => `Ceiling issue in ${a.room}. Active leak or stain: ${a.leak}. Roof damage: ${a.damage}. Possible attic cause: ${a.attic}. ${a.note}`,
+      "Other": (a) => `Tenant reports: ${a.note}. Additional details: ${a.details || "None"}`
+    };
+
+    let currentFlow = [], answers = {}, currentIndex = 0, selectedType = "";
+
+    document.getElementById("issueType").addEventListener("change", function () {
+      selectedType = this.value;
+      if (!selectedType) return;
+      currentFlow = flows[selectedType] || [{ q: "Please describe your issue:", key: "note" }];
+      answers = {};
+      currentIndex = 0;
+      document.getElementById("questionBox").classList.remove("hidden");
+      askQuestion();
+    });
+
+    function askQuestion() {
+      if (currentIndex < currentFlow.length) {
+        const current = currentFlow[currentIndex];
+        document.getElementById("questionText").innerText = current.q;
+        document.getElementById("answerInput").value = "";
+        document.getElementById("answerInput").focus();
+      } else {
+        document.getElementById("questionBox").classList.add("hidden");
+        document.getElementById("summarySection").classList.remove("hidden");
+        const summary = summaries[selectedType]?.(answers) || answers.note;
+        document.getElementById("summaryText").innerText = summary;
+      }
+    }
+
+    function submitAnswer() {
+      const key = currentFlow[currentIndex].key;
+      const val = document.getElementById("answerInput").value.trim();
+      if (!val) return;
+      answers[key] = val;
+      currentIndex++;
+      askQuestion();
+    }
+
+    document.getElementById("workOrderForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const params = {
+        tenant_name: document.getElementById("name").value,
+        tenant_address: document.getElementById("address").value,
+        tenant_phone: document.getElementById("phone").value,
+        tenant_email: document.getElementById("email").value,
+        summary: document.getElementById("summaryText").innerText
+      };
+      emailjs.send("service_gm4dva6", "template_fuki8ci", params)
+        .then(() => {
+          document.getElementById("workOrderForm").classList.add("hidden");
+          document.getElementById("confirmation").classList.remove("hidden");
+        })
+        .catch((err) => {
+          alert("Submission failed. Please try again later.");
+          console.error("EmailJS Error:", err);
+        });
+    });
+  </script>
+</body>
+</html>
