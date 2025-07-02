@@ -88,6 +88,8 @@
     <h3>We have received your request and it will be processed in priority order.</h3>
   </div>
 
+  <button onclick="sendTestEmail()">Send Test Email</button>
+
   <script src="https://cdn.jsdelivr.net/npm/emailjs-com@2.6.4/dist/email.min.js"></script>
   <script>
     emailjs.init("bBYfl0lnqtkXqqhQQ");
@@ -193,11 +195,11 @@
     document.getElementById("workOrderForm").addEventListener("submit", function (e) {
       e.preventDefault();
       const params = {
-        tenant_name: document.getElementById("name").value || "Not provided",
-        tenant_address: document.getElementById("address").value || "Not provided",
-        tenant_phone: document.getElementById("phone").value || "Not provided",
-        tenant_email: document.getElementById("email").value || "Not provided",
-        summary: document.getElementById("summaryText").innerText || "Not provided"
+        tenant_name: document.getElementById("name").value,
+        tenant_address: document.getElementById("address").value,
+        tenant_phone: document.getElementById("phone").value,
+        tenant_email: document.getElementById("email").value,
+        summary: document.getElementById("summaryText").innerText
       };
       emailjs.send("service_gm4dva6", "template_fuki8ci", params)
         .then(() => {
@@ -206,9 +208,23 @@
         })
         .catch((err) => {
           console.error("EmailJS Error:", err);
-          alert("Submission failed. Please check your info and try again.");
+          alert("Submission failed. Please try again.");
         });
     });
+
+    function sendTestEmail() {
+      const testParams = {
+        tenant_name: "Test User",
+        tenant_address: "123 Test St",
+        tenant_phone: "123-456-7890",
+        tenant_email: "test@example.com",
+        summary: "This is a test summary for debugging."
+      };
+
+      emailjs.send("service_gm4dva6", "template_fuki8ci", testParams)
+        .then(() => alert("✅ Test email sent successfully."))
+        .catch(err => alert("❌ Test email failed: " + JSON.stringify(err)));
+    }
   </script>
 </body>
 </html>
