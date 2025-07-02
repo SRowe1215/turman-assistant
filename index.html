@@ -90,7 +90,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/emailjs-com@2.6.4/dist/email.min.js"></script>
   <script>
-    emailjs.init("bBYfl0lnqtkXqqhQQ"); // Public API Key
+    emailjs.init("bBYfl0lnqtkXqqhQQ");
 
     const flows = {
       "Refrigerator": [
@@ -142,8 +142,8 @@
     };
 
     const summaries = {
-      "Oven / Stove": (a) => `There is an issue with the ${a.type || 'oven/stove'}. What’s not working: ${a.function || 'unspecified'}. Breaker: ${a.breaker || 'unknown'}. Notes: ${a.note || ''}`,
-      "Refrigerator": (a) => `Fridge issue: Running – ${a.running}. Light – ${a.light}. Outlet tested – ${a.outlet}. Breaker – ${a.breaker}. Notes: ${a.note}`,
+      "Refrigerator": (a) => `Fridge issue: Running – ${a.running}. Light – ${a.light}. Outlet tested – ${a.outlet}. Breaker – ${a.breaker}. Notes: ${a.note}.`,
+      "Oven / Stove": (a) => `There is an issue with the ${a.type || 'oven/stove'}. What’s not working: ${a.function || 'unspecified'}. Breaker: ${a.breaker || 'unknown'}. Notes: ${a.note || ''}.`,
       "AC / Heat": (a) => `HVAC issue. Outside temp: ${a.priority}. Air blowing: ${a.air}. Thermostat: ${a.thermostat}. Breakers: ${a.breaker}. Noise from unit: ${a.unit}. Notes: ${a.note}`,
       "Plumbing / Leak": (a) => `Plumbing issue near: ${a.source}. Shutoff valve: ${a.shutoff}. Flow type: ${a.flow}. Repeat issue: ${a.repeat}. Notes: ${a.note}`,
       "Electrical / Power": (a) => `Electrical issue in: ${a.area}. Breakers/GFCIs: ${a.breaker}. Outlet test: ${a.test}. Burn marks/smell: ${a.burn}. Notes: ${a.note}`,
@@ -168,6 +168,7 @@
         const current = currentFlow[currentIndex];
         document.getElementById("questionText").innerText = current.q;
         document.getElementById("answerInput").value = "";
+        document.getElementById("answerInput").focus();
       } else {
         document.getElementById("questionBox").classList.add("hidden");
         document.getElementById("summarySection").classList.remove("hidden");
