@@ -1,153 +1,90 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Turman Work Order Assistant</title>
+  <title>Turman Tenant Work Order Request</title>
+  <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
   <style>
     body {
-      font-family: 'Times New Roman', serif;
-      max-width: 700px;
+      font-family: Times New Roman, serif;
+      max-width: 600px;
       margin: auto;
       padding: 2em;
-      background: #fff;
     }
     h1 {
       text-align: center;
     }
-    img.logo {
+    label {
       display: block;
-      margin: 0 auto 1em auto;
-      max-width: 200px;
+      margin-top: 1em;
+      font-weight: bold;
     }
-    select, button, input {
+    input, textarea, select, button {
       width: 100%;
-      padding: 10px;
-      margin-top: 10px;
-      font-family: 'Times New Roman', serif;
+      padding: 0.6em;
+      margin-top: 0.4em;
+      font-family: Times New Roman, serif;
+      font-size: 1em;
     }
     .hidden {
       display: none;
     }
-    .summary-box {
-      white-space: pre-wrap;
-      background: #f9f9f9;
-      padding: 10px;
-      margin-top: 20px;
-      border: 1px solid #ccc;
+    .note {
+      font-size: 0.9em;
+      color: #666;
+      margin-top: 0.3em;
     }
   </style>
 </head>
 <body>
-  <img src="https://www.turmanco.com/images/logo.png" alt="Turman Realty Logo" class="logo" />
-  <h1>Turman Work Order Assistant</h1>
-  <label for="issueType">Select Issue Type:</label>
-  <select id="issueType">
-    <option value="">-- Choose an issue --</option>
-    <option value="Refrigerator">Refrigerator</option>
-    <option value="Oven / Stove">Oven / Stove</option>
-    <option value="AC / Heat">AC / Heat</option>
-    <option value="Plumbing / Leak">Plumbing / Leak</option>
-    <option value="Electrical / Power">Electrical / Power</option>
-    <option value="Roof / Ceiling">Roof / Ceiling</option>
-    <option value="Other">Other</option>
-  </select>
-  <div id="questionBox" class="hidden">
-    <p id="questionText"></p>
-    <input type="text" id="answerInput" spellcheck="true" />
-    <button onclick="submitAnswer()">Submit Answer</button>
-  </div>
-  <div id="summarySection" class="hidden">
-    <h2>Summary</h2>
-    <div id="summaryText" class="summary-box"></div>
-    <button onclick="copySummary()">Copy Summary</button>
-    <button onclick="location.reload()">Start Over</button>
-  </div>
+  <h1>Tenant Work Order Request</h1>
+  <form id="workOrderForm">
+    <label for="tenant_name">Your Name</label>
+    <input type="text" id="tenant_name" name="tenant_name" required>
+
+    <label for="tenant_address">Street Address</label>
+    <input type="text" id="tenant_address" name="tenant_address" required>
+
+    <label for="tenant_unit">Unit (if applicable)</label>
+    <input type="text" id="tenant_unit" name="tenant_unit">
+
+    <label for="tenant_phone">Phone Number</label>
+    <input type="tel" id="tenant_phone" name="tenant_phone" required>
+
+    <label for="tenant_email">Email Address</label>
+    <input type="email" id="tenant_email" name="tenant_email" required>
+
+    <label for="issue_summary">Please describe your issue(s)</label>
+    <textarea id="issue_summary" name="issue_summary" rows="5" required></textarea>
+
+    <label for="additional_notes">Anything else the vendor should know?</label>
+    <textarea id="additional_notes" name="additional_notes" rows="3"></textarea>
+
+    <label for="photo_url">Photo (Google Drive, Dropbox, etc.)</label>
+    <input type="url" id="photo_url" name="photo_url" placeholder="Paste image link">
+    <div class="note">Uploading a photo helps us respond faster. Strongly encouraged but optional.</div>
+
+    <button type="submit">Submit Request</button>
+    <div id="confirmation" class="hidden">
+      <p>We have received your request and it will be processed in priority order.</p>
+    </div>
+  </form>
 
   <script>
-    const flows = {
-      "Oven / Stove": [
-        { q: "Is it gas or electric?", key: "type" },
-        { q: "Do any burners or the oven turn on?", key: "power" },
-        { q: "If gas, is the pilot light lit?", key: "pilot", conditional: (a) => a.type && a.type.toLowerCase() === "gas" },
-        { q: "Is the breaker on?", key: "breaker" },
-        { q: "Describe the oven/stove issue:", key: "note" }
-      ]
-    };
+    emailjs.init("bBYfl0lnqtkXqqhQQ"); // Your EmailJS public key
 
-    const summaries = {
-      "Oven / Stove": (a) => {
-        let note = a.note ? `They added: "${capitalizeFirst(a.note)}."` : "No further notes were provided.";
-        let summary = `The tenant reports a problem with the ${a.type || 'unknown type'} oven/stove. `;
-        if (a.power && a.power.toLowerCase() === "no") {
-      summary += "None of the burners or the oven are working. ";
-    } else if (a.power) {
-      summary += `They stated that: "${a.power}". `;
-    }
-        if (a.type && a.type.toLowerCase() === "gas" && a.pilot)
-          summary += `The pilot light is ${a.pilot.toLowerCase() === "yes" ? "lit" : "not lit"}. `;
-        if (a.breaker) summary += `Breaker is ${a.breaker.toLowerCase() === "yes" ? "on" : "off"}. `;
-        return summary + note;
-      }
-    };
+    document.getElementById('workOrderForm').addEventListener('submit', function (e) {
+      e.preventDefault();
 
-    function capitalizeFirst(text) {
-      return text.charAt(0).toUpperCase() + text.slice(1);
-    }
-
-    let currentFlow = [], answers = {}, currentIndex = 0, selectedType = "";
-
-    document.getElementById("issueType").addEventListener("change", function () {
-      selectedType = this.value;
-      if (!selectedType) return;
-      currentFlow = flows[selectedType];
-      answers = {};
-      currentIndex = 0;
-      document.getElementById("summarySection").classList.add("hidden");
-      document.getElementById("questionBox").classList.remove("hidden");
-      askQuestion();
-    });
-
-    function askQuestion() {
-      while (currentIndex < currentFlow.length && currentFlow[currentIndex].conditional && !currentFlow[currentIndex].conditional(answers)) {
-        currentIndex++;
-      }
-      if (currentIndex < currentFlow.length) {
-        document.getElementById("questionText").innerText = currentFlow[currentIndex].q;
-        document.getElementById("answerInput").value = "";
-        document.getElementById("answerInput").focus();
-      } else {
-        showSummary();
-      }
-    }
-
-    function submitAnswer() {
-      const key = currentFlow[currentIndex].key;
-      const val = document.getElementById("answerInput").value.trim();
-      if (!val) return;
-      answers[key] = val;
-      currentIndex++;
-      askQuestion();
-    }
-
-    function showSummary() {
-      document.getElementById("questionBox").classList.add("hidden");
-      document.getElementById("summarySection").classList.remove("hidden");
-      const summary = summaries[selectedType](answers);
-      document.getElementById("summaryText").innerText = summary;
-    }
-
-    function copySummary() {
-      const text = document.getElementById("summaryText").innerText;
-      navigator.clipboard.writeText(text).then(() => alert("Summary copied!"));
-    }
-
-    document.getElementById("answerInput").addEventListener("keypress", function(e) {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        submitAnswer();
-      }
+      emailjs.sendForm('service_gm4dva6', 'template_fuki8ci', this)
+        .then(() => {
+          document.getElementById('confirmation').classList.remove('hidden');
+          document.getElementById('workOrderForm').reset();
+        }, (error) => {
+          alert("There was an error submitting the form. Please try again.");
+          console.log('FAILED...', error);
+        });
     });
   </script>
 </body>
