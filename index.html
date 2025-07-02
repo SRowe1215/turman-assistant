@@ -144,13 +144,13 @@
     };
 
     const summaries = {
-      "Refrigerator": (a) => `Tenant reports the fridge is ${a.running}. The light ${a.light}. They ${a.outlet} tested the outlet. Breaker is ${a.breaker}. Additional note: ${a.note}.`,
-      "Oven / Stove": (a) => `Tenant reports an issue with a ${a.type || "stove/oven"}. Affected part: ${a.function}. Breaker is ${a.breaker}. Additional note: ${a.note}.`,
-      "AC / Heat": (a) => `HVAC concern. Outside temp: ${a.priority}. Air from vents: ${a.air}. Thermostat: ${a.thermostat}. Breakers: ${a.breaker}. Outdoor unit: ${a.unit}. Note: ${a.note}.`,
-      "Plumbing / Leak": (a) => `Tenant reports a ${a.flow} leak from ${a.source}. Shutoff valve: ${a.shutoff}. Prior occurrence: ${a.repeat}. Notes: ${a.note}.`,
-      "Electrical / Power": (a) => `Reported power issue affecting: ${a.area}. Breakers/GFCIs checked: ${a.breaker}. Outlet/light tested: ${a.test}. Burn/smell: ${a.burn}. Note: ${a.note}.`,
-      "Roof / Ceiling": (a) => `Ceiling concern in ${a.room}. Type: ${a.leak}. Roof damage noted: ${a.damage}. Attic cause: ${a.attic}. Notes: ${a.note}.`,
-      "Other": (a) => `Other issue described: ${a.note}. Additional details: ${a.details}.`
+      "Refrigerator": (a) => `Tenant reports the fridge is ${a.running || "unspecified"}. The light ${a.light || "status unknown"}. They ${a.outlet || "did not"} test the outlet. Breaker is ${a.breaker || "unknown"}. Additional note: ${a.note || "none"}.`,
+      "Oven / Stove": (a) => `Tenant reports the stove is ${a.type || "unspecified"}. Burners: ${a.function || "unknown"}. Breaker: ${a.breaker || "unknown"}. Notes: ${a.note || "none"}.`,
+      "AC / Heat": (a) => `HVAC concern. Outside temp: ${a.priority || "unknown"}. Air from vents: ${a.air || "unknown"}. Thermostat: ${a.thermostat || "unknown"}. Breakers: ${a.breaker || "unknown"}. Outdoor unit: ${a.unit || "unknown"}. Notes: ${a.note || "none"}.`,
+      "Plumbing / Leak": (a) => `Tenant reports a ${a.flow || "leak"} from ${a.source || "unknown location"}. Shutoff valve: ${a.shutoff || "unknown"}. Repeat issue: ${a.repeat || "unknown"}. Notes: ${a.note || "none"}.`,
+      "Electrical / Power": (a) => `Tenant reports power issue in ${a.area || "unknown area"}. Breaker and GFCI check: ${a.breaker || "unknown"}. Alternate test: ${a.test || "unknown"}. Smell or burns: ${a.burn || "none"}. Notes: ${a.note || "none"}.`,
+      "Roof / Ceiling": (a) => `Tenant reports concern in ${a.room || "unspecified room"}. Leak or stain: ${a.leak || "unknown"}. Roof damage: ${a.damage || "unknown"}. Possible attic source: ${a.attic || "unknown"}. Notes: ${a.note || "none"}.`,
+      "Other": (a) => `Tenant describes: ${a.note || "none"}. Additional info: ${a.details || "none"}.`
     };
 
     let currentFlow = [], answers = {}, currentIndex = 0, selectedType = "";
@@ -174,7 +174,7 @@
       } else {
         document.getElementById("questionBox").classList.add("hidden");
         document.getElementById("summarySection").classList.remove("hidden");
-        const summary = summaries[selectedType]?.(answers) || answers.note;
+        const summary = summaries[selectedType]?.(answers) || "No summary provided.";
         document.getElementById("summaryText").innerText = summary;
       }
     }
@@ -191,23 +191,23 @@
     document.getElementById("workOrderForm").addEventListener("submit", function (e) {
       e.preventDefault();
       const params = {
-        tenant_name: document.getElementById("name").value,
-        tenant_address: document.getElementById("address").value,
-        tenant_unit: document.getElementById("unit").value,
-        tenant_phone: document.getElementById("phone").value,
-        tenant_email: document.getElementById("email").value,
-        summary: document.getElementById("summaryText").innerText
+        tenant_name: document.getElementById("name").value || "Not provided",
+        tenant_address: document.getElementById("address").value || "Not provided",
+        tenant_unit: document.getElementById("unit").value || "Not provided",
+        tenant_phone: document.getElementById("phone").value || "Not provided",
+        tenant_email: document.getElementById("email").value || "Not provided",
+        summary: document.getElementById("summaryText").innerText || "No summary provided"
       };
       emailjs.send("service_gm4dva6", "template_fuki8ci", params)
         .then(() => {
           document.getElementById("workOrderForm").classList.add("hidden");
           document.getElementById("confirmation").classList.remove("hidden");
         })
-     .catch((err) => {
-  console.error('EmailJS Error:', err);
-  alert("Submission failed. Please try again.");
-});
-
+        .catch((err) => {
+          console.error('EmailJS Error:', err);
+          alert("Submission failed. Please try again.");
+        });
+    });
   </script>
 </body>
 </html>
