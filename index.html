@@ -14,6 +14,9 @@
     h1 {
       text-align: center;
     }
+    label, p {
+      font-weight: bold;
+    }
     select, button, input, textarea {
       width: 100%;
       padding: 10px;
@@ -87,27 +90,65 @@
 
   <script src="https://cdn.jsdelivr.net/npm/emailjs-com@2.6.4/dist/email.min.js"></script>
   <script>
-    emailjs.init("bBYfl0lnqtkXqqhQQ"); // public API key
+    emailjs.init("bBYfl0lnqtkXqqhQQ"); // Public API Key
 
     const flows = {
+      "Refrigerator": [
+        { q: "Is the fridge running or making noise?", key: "running" },
+        { q: "Does the light turn on when the door opens?", key: "light" },
+        { q: "Have you tested the outlet with another device?", key: "outlet" },
+        { q: "Is the breaker on?", key: "breaker" },
+        { q: "Briefly describe what's wrong:", key: "note" }
+      ],
       "Oven / Stove": [
         { q: "Is it gas or electric?", key: "type" },
         { q: "What exactly is not working (e.g., burners, oven)?", key: "function" },
         { q: "Is the breaker on?", key: "breaker" },
-        { q: "Please describe the issue in more detail:", key: "note" }
+        { q: "Briefly describe the issue:", key: "note" }
+      ],
+      "AC / Heat": [
+        { q: "Is it over 85°F or under 60°F outside?", key: "priority" },
+        { q: "Is any air blowing through the vents?", key: "air" },
+        { q: "Is the thermostat display on?", key: "thermostat" },
+        { q: "Have you reset the breakers?", key: "breaker" },
+        { q: "Do you hear noise from the outdoor unit?", key: "unit" },
+        { q: "Briefly describe the issue:", key: "note" }
+      ],
+      "Plumbing / Leak": [
+        { q: "Where is the leak coming from?", key: "source" },
+        { q: "Have you shut off the valve?", key: "shutoff" },
+        { q: "Is it a drip or steady flow?", key: "flow" },
+        { q: "Has this happened before?", key: "repeat" },
+        { q: "Briefly describe the issue:", key: "note" }
+      ],
+      "Electrical / Power": [
+        { q: "Is power out in one room or the whole unit?", key: "area" },
+        { q: "Have you checked all breakers and GFCIs?", key: "breaker" },
+        { q: "Did you test the outlet or light with another device?", key: "test" },
+        { q: "Are there any smells or burn marks?", key: "burn" },
+        { q: "Briefly describe the issue:", key: "note" }
+      ],
+      "Roof / Ceiling": [
+        { q: "Which room is leaking or stained?", key: "room" },
+        { q: "Is it actively leaking or just stained?", key: "leak" },
+        { q: "Is there visible roof damage (shingles, limbs)?", key: "damage" },
+        { q: "Could something in the attic be causing it (AC, pipes)?", key: "attic" },
+        { q: "Briefly describe the issue:", key: "note" }
       ],
       "Other": [
-        { q: "Please describe your issue in detail:", key: "note" }
+        { q: "Briefly describe your issue:", key: "note" },
+        { q: "Anything else that might help?", key: "details" }
       ]
     };
 
     const summaries = {
-      "Oven / Stove": (a) => {
-        const type = a.type?.toLowerCase() || "";
-        let note = `There is an issue with the ${type} oven/stove. Functionality: ${a.function || "unspecified"}. Breaker: ${a.breaker || "unknown"}. Additional notes: ${a.note || "none"}.`;
-        return note.replace(/\.{2,}/g, ".").replace(/  +/g, " ");
-      },
-      "Other": (a) => `Other reported issue: ${a.note}`
+      "Oven / Stove": (a) => `There is an issue with the ${a.type || 'oven/stove'}. What’s not working: ${a.function || 'unspecified'}. Breaker: ${a.breaker || 'unknown'}. Notes: ${a.note || ''}`,
+      "Refrigerator": (a) => `Fridge issue: Running – ${a.running}. Light – ${a.light}. Outlet tested – ${a.outlet}. Breaker – ${a.breaker}. Notes: ${a.note}`,
+      "AC / Heat": (a) => `HVAC issue. Outside temp: ${a.priority}. Air blowing: ${a.air}. Thermostat: ${a.thermostat}. Breakers: ${a.breaker}. Noise from unit: ${a.unit}. Notes: ${a.note}`,
+      "Plumbing / Leak": (a) => `Plumbing issue near: ${a.source}. Shutoff valve: ${a.shutoff}. Flow type: ${a.flow}. Repeat issue: ${a.repeat}. Notes: ${a.note}`,
+      "Electrical / Power": (a) => `Electrical issue in: ${a.area}. Breakers/GFCIs: ${a.breaker}. Outlet test: ${a.test}. Burn marks/smell: ${a.burn}. Notes: ${a.note}`,
+      "Roof / Ceiling": (a) => `Roof/Ceiling issue in: ${a.room}. Leak type: ${a.leak}. Roof damage: ${a.damage}. Attic issue: ${a.attic}. Notes: ${a.note}`,
+      "Other": (a) => `Other issue: ${a.note || ''}. Extra info: ${a.details || ''}`
     };
 
     let currentFlow = [], answers = {}, currentIndex = 0, selectedType = "";
@@ -115,7 +156,7 @@
     document.getElementById("issueType").addEventListener("change", function () {
       selectedType = this.value;
       if (!selectedType) return;
-      currentFlow = flows[selectedType] || [{ q: "Please describe the issue:", key: "note" }];
+      currentFlow = flows[selectedType];
       answers = {};
       currentIndex = 0;
       document.getElementById("questionBox").classList.remove("hidden");
@@ -124,12 +165,13 @@
 
     function askQuestion() {
       if (currentIndex < currentFlow.length) {
-        document.getElementById("questionText").innerText = currentFlow[currentIndex].q;
+        const current = currentFlow[currentIndex];
+        document.getElementById("questionText").innerText = current.q;
         document.getElementById("answerInput").value = "";
       } else {
         document.getElementById("questionBox").classList.add("hidden");
         document.getElementById("summarySection").classList.remove("hidden");
-        let summary = summaries[selectedType]?.(answers) || answers.note;
+        const summary = summaries[selectedType]?.(answers) || answers.note;
         document.getElementById("summaryText").innerText = summary;
       }
     }
