@@ -142,31 +142,25 @@
     };
 
     const summaries = {
-      "Refrigerator": (a) =>
-        `Tenant reports the fridge is ${a.running}. The light ${a.light}. They ${a.outlet} tested the outlet. Breaker is ${a.breaker}. Additional note: ${a.note}.`,
-      "Oven / Stove": (a) =>
-        `Tenant reports an issue with a ${a.type} stove. The ${a.function} is not working. Breaker status: ${a.breaker}. Notes: ${a.note}.`,
-      "AC / Heat": (a) =>
-        `HVAC concern. Outdoor temperature: ${a.priority}. Air from vents: ${a.air}. Thermostat display: ${a.thermostat}. Breakers reset: ${a.breaker}. Outdoor unit noise: ${a.unit}. Tenant comments: ${a.note}.`,
-      "Plumbing / Leak": (a) =>
-        `Tenant reports a ${a.flow} leak from ${a.source}. Shutoff valve used: ${a.shutoff}. Previous issue: ${a.repeat}. Additional note: ${a.note}.`,
-      "Electrical / Power": (a) =>
-        `Tenant reports power is out in ${a.area}. Breakers/GFCIs checked: ${a.breaker}. Outlet/light tested: ${a.test}. Smells or burn marks: ${a.burn}. Note: ${a.note}.`,
-      "Roof / Ceiling": (a) =>
-        `Tenant reports a ceiling issue in the ${a.room}. It is ${a.leak}. Visible roof damage: ${a.damage}. Possible attic source: ${a.attic}. Additional note: ${a.note}.`,
-      "Other": (a) =>
-        `Tenant describes the issue as: ${a.note}. Additional information provided: ${a.details}.`
+      "Refrigerator": (a) => `Tenant reports the fridge is ${a.running}. The interior light ${a.light}. They ${a.outlet} tested the outlet. Breaker is ${a.breaker}. ${a.note}`,
+      "Oven / Stove": (a) => {
+        const type = a.type?.toLowerCase() === "electric" ? "an electric stove or oven" :
+                     a.type?.toLowerCase() === "gas" ? "a gas stove or oven" : "a stove or oven";
+        return `Tenant reports an issue with ${type}. Affected part: ${a.function}. Breaker is ${a.breaker}. ${a.note}`;
+      },
+      "AC / Heat": (a) => `HVAC concern. Outside temp: ${a.priority}. Airflow: ${a.air}. Thermostat: ${a.thermostat}. Breakers: ${a.breaker}. Outdoor unit: ${a.unit}. ${a.note}`,
+      "Plumbing / Leak": (a) => `Tenant reports a ${a.flow} leak from ${a.source}. Shutoff valve used: ${a.shutoff}. Previous occurrence: ${a.repeat}. ${a.note}`,
+      "Electrical / Power": (a) => `Power issue in: ${a.area}. Breakers/GFCIs checked: ${a.breaker}. Tested with other device: ${a.test}. Signs of burning or smell: ${a.burn}. ${a.note}`,
+      "Roof / Ceiling": (a) => `Ceiling issue in ${a.room}. Active leak or stain: ${a.leak}. Roof damage: ${a.damage}. Possible attic cause: ${a.attic}. ${a.note}`,
+      "Other": (a) => `Tenant reports: ${a.note}. Additional details: ${a.details || "None"}`
     };
 
-    let currentFlow = [],
-        answers = {},
-        currentIndex = 0,
-        selectedType = "";
+    let currentFlow = [], answers = {}, currentIndex = 0, selectedType = "";
 
     document.getElementById("issueType").addEventListener("change", function () {
       selectedType = this.value;
       if (!selectedType) return;
-      currentFlow = flows[selectedType];
+      currentFlow = flows[selectedType] || [{ q: "Please describe your issue:", key: "note" }];
       answers = {};
       currentIndex = 0;
       document.getElementById("questionBox").classList.remove("hidden");
@@ -210,8 +204,8 @@
           document.getElementById("workOrderForm").classList.add("hidden");
           document.getElementById("confirmation").classList.remove("hidden");
         })
-        .catch(() => {
-          alert("Submission failed. Please try again or contact the office.");
+        .catch((err) => {
+          alert("Submission failed. Please try again.");
         });
     });
   </script>
