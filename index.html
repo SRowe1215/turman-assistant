@@ -193,19 +193,19 @@
     document.getElementById("workOrderForm").addEventListener("submit", function (e) {
       e.preventDefault();
       const params = {
-        tenant_name: document.getElementById("name").value,
-        tenant_address: document.getElementById("address").value,
-        tenant_phone: document.getElementById("phone").value,
-        tenant_email: document.getElementById("email").value,
-        summary: document.getElementById("summaryText").innerText
+        tenant_name: document.getElementById("name").value || "Not provided",
+        tenant_address: document.getElementById("address").value || "Not provided",
+        tenant_phone: document.getElementById("phone").value || "Not provided",
+        tenant_email: document.getElementById("email").value || "Not provided",
+        summary: document.getElementById("summaryText").innerText || "No summary provided"
       };
       emailjs.send("service_gm4dva6", "template_fuki8ci", params)
         .then(() => {
           document.getElementById("workOrderForm").classList.add("hidden");
           document.getElementById("confirmation").classList.remove("hidden");
         })
-        .catch((err) => {
-          alert("Submission failed. Please try again.");
+        .catch(() => {
+          alert("Submission failed. Please check all fields or try again later.");
         });
     });
   </script>
