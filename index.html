@@ -6,120 +6,96 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Turman Work Order Assistant</title>
   <style>
-    body { font-family: 'Times New Roman', serif; max-width: 700px; margin: auto; padding: 2em; background: #fff; color: #000; }
-    h1, h2 { text-align: center; }
-    input, select, button, textarea {
-      width: 100%; padding: 10px; margin: 10px 0; font-family: 'Times New Roman', serif;
+    body { font-family: "Times New Roman", serif; max-width: 700px; margin: auto; padding: 2em; }
+    h1 { text-align: center; }
+    label { font-weight: bold; display: block; margin-top: 1em; }
+    select, input, textarea, button {
+      width: 100%; padding: 10px; margin-top: 5px; font-size: 1em;
     }
-    .section { margin-bottom: 20px; }
-    .hidden { display: none; }
-    .confirmation { padding: 1em; border: 1px solid #ccc; background: #f0f0f0; margin-top: 20px; }
-    label { font-weight: bold; }
+    textarea { resize: vertical; height: 100px; }
+    .note { font-style: italic; font-size: 0.9em; color: #555; }
   </style>
 </head>
 <body>
   <h1>Turman Work Order Assistant</h1>
   <form id="workOrderForm">
-    <div class="section">
-      <label for="tenant_name">Name:</label>
-      <input type="text" id="tenant_name" name="tenant_name" required />
+    <label for="name">Name:</label>
+    <input type="text" id="name" name="name" required>
 
-      <label for="address">Address:</label>
-      <input type="text" id="address" name="address" required />
+    <label for="address">Address:</label>
+    <input type="text" id="address" name="address" required>
 
-      <label for="unit">Unit:</label>
-      <input type="text" id="unit" name="unit" />
+    <label for="unit">Unit:</label>
+    <input type="text" id="unit" name="unit">
 
-      <label for="phone">Phone Number:</label>
-      <input type="tel" id="phone" name="phone" required />
+    <label for="phone">Phone Number:</label>
+    <input type="tel" id="phone" name="phone" required>
 
-      <label for="tenant_email">Email:</label>
-      <input type="email" id="tenant_email" name="tenant_email" required />
-    </div>
+    <label for="email">Email:</label>
+    <input type="email" id="email" name="email" required>
 
-    <div class="section" id="issueSection">
-      <label for="issue_type">What type of issue are you having?</label>
-      <select id="issue_type" name="issue_type" required onchange="showFollowUp(this.value)">
-        <option value="">-- Select an issue --</option>
-        <option value="AC / Heat">AC / Heat</option>
-        <option value="Refrigerator">Refrigerator</option>
-        <option value="Oven / Stove">Oven / Stove</option>
-        <option value="Plumbing / Leak">Plumbing / Leak</option>
-        <option value="Electrical / Power">Electrical / Power</option>
-        <option value="Roof / Ceiling">Roof / Ceiling</option>
-        <option value="Other">Other</option>
-      </select>
+    <label for="issueType">What type of issue are you having?</label>
+    <select id="issueType" name="issueType" required>
+      <option value="">-- Choose an issue --</option>
+      <option>Refrigerator</option>
+      <option>Oven / Stove</option>
+      <option>AC / Heat</option>
+      <option>Plumbing / Leak</option>
+      <option>Electrical / Power</option>
+      <option>Roof / Ceiling</option>
+      <option>Other</option>
+    </select>
 
-      <div id="followUp"></div>
-    </div>
+    <label for="details">More Details:</label>
+    <textarea id="details" name="details" placeholder="The more info you provide, the faster we can help!"></textarea>
 
-    <div class="section">
-      <label for="photo">Upload a photo (optional but recommended):</label>
-      <input type="file" id="photo" name="photo" accept="image/*" />
-    </div>
+    <label for="photo">Photo (optional):</label>
+    <input type="file" id="photo" name="photo" accept="image/*">
 
-    <button type="submit">Submit Request</button>
+    <p class="note">We have received your request and it will be processed in priority order.</p>
+
+    <button type="submit">Submit Work Order</button>
   </form>
 
-  <div id="confirmation" class="hidden confirmation">
-    <p>We have received your request and it will be processed in priority order.</p>
-  </div>
-
-  <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
-  <script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/emailjs-com@2.6.4/dist/email.min.js"></script>
+  <script type="text/javascript">
     emailjs.init("bBYfl0lnqtkXqqhQQ");
-
-    const followUps = {
-      "AC / Heat": "Is it blowing air? Is the thermostat working? Any unusual noises or smells?",
-      "Refrigerator": "Is the fridge running? Is it cold? Lights working?",
-      "Oven / Stove": "Gas or electric? What isn't working? Breaker checked?",
-      "Plumbing / Leak": "Where is the leak? Is it slow or active? Have you shut off the water?",
-      "Electrical / Power": "What isn't working? Whole unit or partial? Have you checked the breaker?",
-      "Roof / Ceiling": "Which room? Active leak or stain? Can you see roof damage?",
-      "Other": "Please describe the issue in detail."
-    };
-
-    function showFollowUp(type) {
-      const container = document.getElementById('followUp');
-      container.innerHTML = followUps[type] ? `<label>More Details:</label><textarea name="details" required placeholder="${followUps[type]}"></textarea>` : '';
-    }
 
     document.getElementById("workOrderForm").addEventListener("submit", function(event) {
       event.preventDefault();
 
-      const form = event.target;
-      const formData = new FormData(form);
-      const details = form.querySelector("textarea")?.value || "";
-      const photo = formData.get("photo");
+      const formData = new FormData(this);
+      const name = formData.get("name");
+      const address = formData.get("address");
+      const unit = formData.get("unit");
+      const phone = formData.get("phone");
+      const email = formData.get("email");
+      const issueType = formData.get("issueType");
+      const details = formData.get("details");
 
-      const message = `
-New Work Order Request
-Name: ${formData.get("tenant_name")}
-Address: ${formData.get("address")}
-Unit: ${formData.get("unit")}
-Phone: ${formData.get("phone")}
-Email: ${formData.get("tenant_email")}
+      const message = `New Work Order Request
+Name: ${name}
+Address: ${address}
+Unit: ${unit}
+Phone: ${phone}
+Email: ${email}
 
 --- Issue Summary ---
-Issue Type: ${formData.get("issue_type")}
-Details: ${details}
-Photo: ${photo && photo.name ? "[Photo uploaded]" : "None"}
-`;
+${issueType}: ${details}`;
 
       emailjs.send("service_gm4dva6", "template_fuki8ci", {
-        tenant_name: formData.get("tenant_name"),
-        address: formData.get("address"),
-        unit: formData.get("unit"),
-        phone: formData.get("phone"),
-        tenant_email: formData.get("tenant_email"),
-        issue_type: formData.get("issue_type"),
-        details: details,
-        photo_name: photo?.name || "None"
+        name: name,
+        address: address,
+        unit: unit,
+        phone: phone,
+        tenant_email: email,
+        message: message
       }).then(() => {
-        document.getElementById("workOrderForm").classList.add("hidden");
-        document.getElementById("confirmation").classList.remove("hidden");
-      }).catch(error => {
-        alert("Error sending work order: " + JSON.stringify(error));
+        alert("Work order submitted successfully!");
+        document.getElementById("workOrderForm").reset();
+      }, (error) => {
+        alert("There was an error submitting the form. Please try again.");
+        console.error(error);
       });
     });
   </script>
