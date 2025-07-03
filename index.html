@@ -66,13 +66,14 @@
 
   document.getElementById("workOrderForm").addEventListener("submit", function (e) {
     e.preventDefault();
-    const params = {
-      tenant_name: document.getElementById("name").value || "Not provided",
-      tenant_address: document.getElementById("address").value || "Not provided",
-      tenant_phone: document.getElementById("phone").value || "Not provided",
-      tenant_email: document.getElementById("email").value || "Not provided",
-      summary: document.getElementById("summaryText").innerText || "No summary generated"
-    };
+   const params = {
+  tenant_name: document.getElementById("name").value.trim() || "Not provided",
+  tenant_address: document.getElementById("address").value.trim() || "Not provided",
+  tenant_phone: document.getElementById("phone").value.trim() || "Not provided",
+  tenant_email: document.getElementById("email").value.trim() || "Not provided",
+  summary: document.getElementById("summaryText").innerText.trim() || "No summary generated"
+};
+
 
     emailjs.send("service_gm4dva6", "template_fuki8ci", params)
       .then(() => {
