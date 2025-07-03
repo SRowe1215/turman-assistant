@@ -81,9 +81,21 @@
         document.getElementById("confirmation").classList.remove("hidden");
       })
       .catch((err) => {
-        alert("Submission failed. Please try again.");
-        console.error("EmailJS Error:", err);
-      });
+  alert("Submission failed. Please try again.");
+  console.error("EmailJS Error:", err);
+
+  // Try logging helpful properties
+  if (err?.text) {
+    console.error("EmailJS response text:", err.text);
+  }
+  if (err?.status) {
+    console.error("EmailJS response status:", err.status);
+  }
+  if (err?.response) {
+    console.error("EmailJS response:", err.response);
+  }
+});
+
   });
 
   // Attach the Next button handler
