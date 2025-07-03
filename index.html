@@ -11,21 +11,15 @@
       margin: auto;
       padding: 2em;
     }
-    h1 {
-      text-align: center;
-    }
-    label, p {
-      font-weight: bold;
-    }
+    h1 { text-align: center; }
+    label, p { font-weight: bold; }
     select, button, input, textarea {
       width: 100%;
       padding: 10px;
       margin-top: 10px;
       font-family: "Times New Roman", serif;
     }
-    .hidden {
-      display: none;
-    }
+    .hidden { display: none; }
     .summary-box {
       white-space: pre-wrap;
       background: #f9f9f9;
@@ -33,18 +27,8 @@
       margin-top: 20px;
       border: 1px solid #ccc;
     }
-    .section {
-      margin-bottom: 20px;
-    }
+    .section { margin-bottom: 20px; }
   </style>
-
-  <!-- ✅ Classic EmailJS SDK v3 -->
-  <script type="text/javascript" src="https://cdn.emailjs.com/dist/email.min.js"></script>
-  <script type="text/javascript">
-    (function() {
-      emailjs.init("bBYfl0lnqtkXqqhQQ");
-    })();
-  </script>
 </head>
 <body>
   <h1>Turman Work Order Assistant</h1>
@@ -96,7 +80,11 @@
     <h3>We have received your request and it will be processed in priority order.</h3>
   </div>
 
-  <script>
+  <!-- ✅ Use SDK v4+ -->
+  <script type="module">
+    import emailjs from 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.mjs';
+    emailjs.init("bBYfl0lnqtkXqqhQQ");
+
     const flows = {
       "Refrigerator": [
         { q: "Is the fridge running or making noise?", key: "running" },
@@ -197,7 +185,6 @@
 
     document.getElementById("workOrderForm").addEventListener("submit", function (e) {
       e.preventDefault();
-
       const params = {
         tenant_name: document.getElementById("name").value || "Not provided",
         tenant_address: document.getElementById("address").value || "Not provided",
@@ -212,7 +199,7 @@
           document.getElementById("confirmation").classList.remove("hidden");
         })
         .catch((err) => {
-          alert("Submission failed. Check the console.");
+          alert("Submission failed. See console for details.");
           console.error("EmailJS Error:", err);
         });
     });
