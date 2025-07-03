@@ -37,6 +37,14 @@
       margin-bottom: 20px;
     }
   </style>
+
+  <!-- ✅ Classic EmailJS SDK v3 -->
+  <script type="text/javascript" src="https://cdn.emailjs.com/dist/email.min.js"></script>
+  <script type="text/javascript">
+    (function() {
+      emailjs.init("bBYfl0lnqtkXqqhQQ");
+    })();
+  </script>
 </head>
 <body>
   <h1>Turman Work Order Assistant</h1>
@@ -88,11 +96,7 @@
     <h3>We have received your request and it will be processed in priority order.</h3>
   </div>
 
-  <!-- ✅ Classic EmailJS SDK v3 -->
-  <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
   <script>
-    emailjs.init("bBYfl0lnqtkXqqhQQ");
-
     const flows = {
       "Refrigerator": [
         { q: "Is the fridge running or making noise?", key: "running" },
@@ -193,6 +197,7 @@
 
     document.getElementById("workOrderForm").addEventListener("submit", function (e) {
       e.preventDefault();
+
       const params = {
         tenant_name: document.getElementById("name").value || "Not provided",
         tenant_address: document.getElementById("address").value || "Not provided",
@@ -206,12 +211,10 @@
           document.getElementById("workOrderForm").classList.add("hidden");
           document.getElementById("confirmation").classList.remove("hidden");
         })
-     .catch((err) => {
-  alert("Submission failed. Please try again.");
-  console.error("EmailJS Error:", err);
-  alert("EmailJS Debug Info:\n" + JSON.stringify(err, null, 2));
-});
-
+        .catch((err) => {
+          alert("Submission failed. Check the console.");
+          console.error("EmailJS Error:", err);
+        });
     });
   </script>
 </body>
