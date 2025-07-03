@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -89,9 +88,12 @@
     <h3>We have received your request and it will be processed in priority order.</h3>
   </div>
 
-  <script type="module">
-    import emailjs from 'https://cdn.emailjs.com/dist/email.min.mjs';
-    emailjs.init("bBYfl0lnqtkXqqhQQ");
+  <!-- ✅ Classic EmailJS SDK -->
+  <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
+  <script>
+    (function(){
+      emailjs.init("bBYfl0lnqtkXqqhQQ");
+    })();
 
     const flows = {
       "Refrigerator": [
